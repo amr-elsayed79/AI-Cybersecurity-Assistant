@@ -1,0 +1,42 @@
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment Variables & Secrets (Keep .env.example tracked)
+.env
+*.env
+!.env.example
+
+# Python Bytecode & Runtime Caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing, Linting & Coverage Caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local Vector Database & Embedded Storage (Phase 3 Qdrant generated data)
+data/qdrant_db/
+*.sqlite
+*.sqlite3
+
+# Local Model Caches & Large Binary Downloads
+.cache/
+huggingface/
+*.bin
+*.safetensors
+*.pt
+*.onnx
+
+# IDE & OS Specific Files
+.idea/
+.vscode/
+Thumbs.db
+desktop.ini
+.DS_Store

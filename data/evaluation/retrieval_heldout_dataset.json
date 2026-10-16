@@ -1,0 +1,86 @@
+[
+  {
+    "question_id": "heldout-en-01",
+    "language": "en",
+    "query": "How do rate limiting and account lockout prevent brute-force authentication attacks?",
+    "expected_vulnerability_id": "brute-force",
+    "expected_chunk_id": "brute-force_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-ar-01",
+    "language": "ar",
+    "query": "كيف يساهم تحديد معدل الطلبات وقفل الحساب في منع هجمات القوة الغاشمة (Brute Force)؟",
+    "expected_vulnerability_id": "brute-force",
+    "expected_chunk_id": "brute-force_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-en-02",
+    "language": "en",
+    "query": "What causes Local File Inclusion (LFI) and how does directory traversal allow reading sensitive files?",
+    "expected_vulnerability_id": "lfi",
+    "expected_chunk_id": "lfi_overview_and_mechanism"
+  },
+  {
+    "question_id": "heldout-ar-02",
+    "language": "ar",
+    "query": "ما هي أسباب ثغرة تضمين الملفات المحلية (LFI) وكيف تسمح بقراءة الملفات الحساسة؟",
+    "expected_vulnerability_id": "lfi",
+    "expected_chunk_id": "lfi_overview_and_mechanism"
+  },
+  {
+    "question_id": "heldout-en-03",
+    "language": "en",
+    "query": "How do X-Frame-Options headers and Content-Security-Policy frame-ancestors protect against clickjacking?",
+    "expected_vulnerability_id": "clickjacking",
+    "expected_chunk_id": "clickjacking_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-ar-03",
+    "language": "ar",
+    "query": "كيف تحمي ترويسات X-Frame-Options و CSP من هجمات خطف النقرات (Clickjacking)؟",
+    "expected_vulnerability_id": "clickjacking",
+    "expected_chunk_id": "clickjacking_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-en-04",
+    "language": "en",
+    "query": "What are common security flaws in OAuth implementation such as CSRF in authorization flows and redirect URI manipulation?",
+    "expected_vulnerability_id": "oauth-security",
+    "expected_chunk_id": "oauth-security_overview_and_mechanism"
+  },
+  {
+    "question_id": "heldout-ar-04",
+    "language": "ar",
+    "query": "ما هي الثغرات الشائعة في تطبيق بروتوكول OAuth والتلاعب بروابط إعادة التوجيه؟",
+    "expected_vulnerability_id": "oauth-security",
+    "expected_chunk_id": "oauth-security_overview_and_mechanism"
+  },
+  {
+    "question_id": "heldout-en-05",
+    "language": "en",
+    "query": "How can applications validate destination URLs to prevent unvalidated open redirect attacks?",
+    "expected_vulnerability_id": "open-redirect",
+    "expected_chunk_id": "open-redirect_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-ar-05",
+    "language": "ar",
+    "query": "كيف يمكن للأنظمة التحقق من الروابط لمنع هجمات إعادة التوجيه المفتوح غير الموثوقة؟",
+    "expected_vulnerability_id": "open-redirect",
+    "expected_chunk_id": "open-redirect_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-en-06",
+    "language": "en",
+    "query": "What remediation controls prevent session fixation by regenerating session identifiers upon authentication?",
+    "expected_vulnerability_id": "session-fixation",
+    "expected_chunk_id": "session-fixation_prevention_and_remediation"
+  },
+  {
+    "question_id": "heldout-ar-06",
+    "language": "ar",
+    "query": "ما هي إجراءات الوقاية لتفادي تثبيت الجلسة (Session Fixation) وتجديد معرف الجلسة؟",
+    "expected_vulnerability_id": "session-fixation",
+    "expected_chunk_id": "session-fixation_prevention_and_remediation"
+  }
+]

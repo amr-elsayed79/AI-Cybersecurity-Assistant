@@ -1,0 +1,170 @@
+[
+  {
+    "question_id": "eval-en-01",
+    "language": "en",
+    "query": "How do I prevent SQL Injection vulnerabilities using parameterized queries and prepared statements?",
+    "expected_vulnerability_id": "sql-injection",
+    "expected_chunk_id": "sql-injection_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-ar-01",
+    "language": "ar",
+    "query": "كيف يمكن منع هجمات حقن SQL باستخدام الاستعلامات المجهزة والمعلمة؟",
+    "expected_vulnerability_id": "sql-injection",
+    "expected_chunk_id": "sql-injection_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-en-02",
+    "language": "en",
+    "query": "What is XML External Entity (XXE) injection and how do external entities get processed?",
+    "expected_vulnerability_id": "xxe",
+    "expected_chunk_id": "xxe_overview_and_mechanism"
+  },
+  {
+    "question_id": "eval-ar-02",
+    "language": "ar",
+    "query": "ما هي ثغرة الكيانات الخارجية لـ XML (XXE) وكيف تتم معالجة الكيانات الخارجية غير الآمنة؟",
+    "expected_vulnerability_id": "xxe",
+    "expected_chunk_id": "xxe_overview_and_mechanism"
+  },
+  {
+    "question_id": "eval-en-03",
+    "language": "en",
+    "query": "How do you detect and test for OS command injection in vulnerable source code?",
+    "expected_vulnerability_id": "os-command-injection",
+    "expected_chunk_id": "os-command-injection_detection_and_indicators"
+  },
+  {
+    "question_id": "eval-ar-03",
+    "language": "ar",
+    "query": "كيف يتم فحص واكتشاف ثغرات حقن أوامر نظام التشغيل (OS Command Injection) في الكود؟",
+    "expected_vulnerability_id": "os-command-injection",
+    "expected_chunk_id": "os-command-injection_detection_and_indicators"
+  },
+  {
+    "question_id": "eval-en-04",
+    "language": "en",
+    "query": "What common mistakes and template engine pitfalls lead to Server-Side Template Injection?",
+    "expected_vulnerability_id": "ssti",
+    "expected_chunk_id": "ssti_secure_coding_and_mistakes"
+  },
+  {
+    "question_id": "eval-ar-04",
+    "language": "ar",
+    "query": "ما هي الأخطاء البرمجية الشائعة التي تؤدي إلى ثغرة حقن القوالب من جانب الخادم (SSTI)؟",
+    "expected_vulnerability_id": "ssti",
+    "expected_chunk_id": "ssti_secure_coding_and_mistakes"
+  },
+  {
+    "question_id": "eval-en-05",
+    "language": "en",
+    "query": "How does Server-Side Request Forgery allow an attacker to reach internal network services and cloud metadata?",
+    "expected_vulnerability_id": "ssrf",
+    "expected_chunk_id": "ssrf_overview_and_mechanism"
+  },
+  {
+    "question_id": "eval-ar-05",
+    "language": "ar",
+    "query": "كيف تمكن ثغرة تزوير الطلبات من جانب الخادم (SSRF) المهاجم من الوصول إلى البيانات السحابية والشبكة الداخلية؟",
+    "expected_vulnerability_id": "ssrf",
+    "expected_chunk_id": "ssrf_overview_and_mechanism"
+  },
+  {
+    "question_id": "eval-en-06",
+    "language": "en",
+    "query": "What are effective remediation controls for Insecure Direct Object References and broken object level authorization?",
+    "expected_vulnerability_id": "bola-idor",
+    "expected_chunk_id": "bola-idor_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-ar-06",
+    "language": "ar",
+    "query": "ما هي أفضل الطرق لمعالجة ثغرة المراجع المباشرة غير الآمنة للكائنات (IDOR / BOLA) والتحقق من الصلاحيات؟",
+    "expected_vulnerability_id": "bola-idor",
+    "expected_chunk_id": "bola-idor_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-en-07",
+    "language": "en",
+    "query": "What are secure coding practices for JSON Web Tokens and how to avoid algorithm confusion pitfalls?",
+    "expected_vulnerability_id": "jwt-security",
+    "expected_chunk_id": "jwt-security_secure_coding_and_mistakes"
+  },
+  {
+    "question_id": "eval-ar-07",
+    "language": "ar",
+    "query": "ما هي أفضل الممارسات البرمجية لتأمين رموز JWT وتجنب أخطاء التحقق من الخوارزمية؟",
+    "expected_vulnerability_id": "jwt-security",
+    "expected_chunk_id": "jwt-security_secure_coding_and_mistakes"
+  },
+  {
+    "question_id": "eval-en-08",
+    "language": "en",
+    "query": "How can security testers identify permissive CORS origins and misconfigured Access-Control-Allow-Origin headers?",
+    "expected_vulnerability_id": "cors-misconfiguration",
+    "expected_chunk_id": "cors-misconfiguration_detection_and_indicators"
+  },
+  {
+    "question_id": "eval-ar-08",
+    "language": "ar",
+    "query": "كيف يمكن فحص وكشف إعدادات CORS الخاطئة وترويسات Access-Control-Allow-Origin غير الآمنة؟",
+    "expected_vulnerability_id": "cors-misconfiguration",
+    "expected_chunk_id": "cors-misconfiguration_detection_and_indicators"
+  },
+  {
+    "question_id": "eval-en-09",
+    "language": "en",
+    "query": "What remediation measures prevent Cross-Site Scripting (XSS) such as context-aware output encoding and Content Security Policy?",
+    "expected_vulnerability_id": "xss",
+    "expected_chunk_id": "xss_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-ar-09",
+    "language": "ar",
+    "query": "ما هي إجراءات الوقاية والحماية لمنع ثغرات البرمجة عبر المواقع (XSS) وتشفير المخرجات؟",
+    "expected_vulnerability_id": "xss",
+    "expected_chunk_id": "xss_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-en-10",
+    "language": "en",
+    "query": "What indicators and testing techniques detect unrestricted malicious file upload vulnerabilities?",
+    "expected_vulnerability_id": "file-upload",
+    "expected_chunk_id": "file-upload_detection_and_indicators"
+  },
+  {
+    "question_id": "eval-ar-10",
+    "language": "ar",
+    "query": "ما هي مؤشرات وطرق اختبار واكتشاف ثغرات رفع الملفات غير الآمنة والخبيثة؟",
+    "expected_vulnerability_id": "file-upload",
+    "expected_chunk_id": "file-upload_detection_and_indicators"
+  },
+  {
+    "question_id": "eval-en-11",
+    "language": "en",
+    "query": "How does path traversal or dot-dot-slash directory traversal vulnerability occur in file handling?",
+    "expected_vulnerability_id": "path-traversal",
+    "expected_chunk_id": "path-traversal_overview_and_mechanism"
+  },
+  {
+    "question_id": "eval-ar-11",
+    "language": "ar",
+    "query": "كيف تعمل ثغرة مسار الدليل (Path Traversal) والتنقل عبر المجلدات في معالجة مسارات الملفات؟",
+    "expected_vulnerability_id": "path-traversal",
+    "expected_chunk_id": "path-traversal_overview_and_mechanism"
+  },
+  {
+    "question_id": "eval-en-12",
+    "language": "en",
+    "query": "How can developers remediate broken access control and enforce centralized authorization checks?",
+    "expected_vulnerability_id": "broken-access-control",
+    "expected_chunk_id": "broken-access-control_prevention_and_remediation"
+  },
+  {
+    "question_id": "eval-ar-12",
+    "language": "ar",
+    "query": "كيف يمكن للمطورين معالجة ثغرات التحكم بالوصول المكسور وتطبيق التحقق المركزي من الصلاحيات؟",
+    "expected_vulnerability_id": "broken-access-control",
+    "expected_chunk_id": "broken-access-control_prevention_and_remediation"
+  }
+]

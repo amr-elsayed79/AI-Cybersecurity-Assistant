@@ -1,0 +1,6 @@
+# AI Cybersecurity Assistant - Phase 4 Incremental Dependencies
+# Phase 3 dependencies are preserved in requirements-phase3.txt
+
+groq>=0.18.0
+fastapi>=0.115.0
+uvicorn>=0.34.0
