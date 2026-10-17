@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.api.v1.chat import get_conversation_store, get_pipeline, set_pipeline
 from app.api.v1.health import get_health_vector_store, set_health_vector_store
+from app.config import Settings, settings
 from app.llm.base import LLMProviderError, LLMResponse
 from app.main import app, create_app
 from app.memory.conversation_store import InMemoryConversationStore, conversation_store
@@ -326,6 +327,133 @@ def test_cors_headers_handling(client):
     response = client.options("/api/v1/chat", headers=headers)
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
+def test_scanner_custom_origin_cors_support():
+    """Verify Settings parses comma-separated and JSON list CORS origins for scanner integration."""
+    # 1. Comma-separated format in .env
+    s_comma = Settings(CORS_ALLOW_ORIGINS="http://localhost:3000,http://scanner.local:5173")
+    assert s_comma.CORS_ALLOW_ORIGINS == ["http://localhost:3000", "http://scanner.local:5173"]
+
+    # 2. JSON array format in .env
+    s_json = Settings(CORS_ALLOW_ORIGINS='["http://localhost:3000", "http://scanner.local:5173"]')
+    assert s_json.CORS_ALLOW_ORIGINS == ["http://localhost:3000", "http://scanner.local:5173"]
+
+    # 3. Native list
+    s_list = Settings(CORS_ALLOW_ORIGINS=["http://scanner.local:5173"])
+    assert s_list.CORS_ALLOW_ORIGINS == ["http://scanner.local:5173"]
+
+
+def test_scanner_ask_ai_api_contract_and_multi_turn_flow(client):
+    """Verify Ask AI integration contract for scanner website: predictable schema, session continuity, error masking."""
+    # Mock pipeline to guarantee zero live Groq calls and fast deterministic testing
+    mock_retriever = MagicMock()
+    chunk = _make_sample_chunk()
+    mock_retriever.retrieve.return_value = RetrievalResult(
+        query="How do I prevent SQL Injection?",
+        top_k=1,
+        latency_ms=12.5,
+        matches=[chunk],
+    )
+
+    mock_llm = MagicMock()
+    mock_llm.generate.return_value = LLMResponse(
+        content="To prevent SQL injection, use parameterized queries [E1].",
+        raw_content="To prevent SQL injection, use parameterized queries [E1].",
+        model="mock-cyber-v1",
+        finish_reason="stop",
+        latency_ms=85.0,
+        usage={"prompt_tokens": 120, "completion_tokens": 25, "total_tokens": 145},
+    )
+
+    set_pipeline(RAGChatPipeline(retriever=mock_retriever, llm_provider=mock_llm))
+
+    # Turn 1: First user query from scanner website without conversation_id
+    resp_turn1 = client.post(
+        "/api/v1/chat",
+        json={"message": "How do I prevent SQL Injection?"},
+    )
+    assert resp_turn1.status_code == 200
+    data1 = resp_turn1.json()
+
+    # Verify complete API contract fields
+    assert "answer" in data1
+    assert "grounded" in data1
+    assert "grounding_status" in data1
+    assert "is_site_specific" in data1
+    assert "language" in data1
+    assert "retrieved_sources" in data1
+    assert "cited_sources" in data1
+    assert "conversation_id" in data1
+    assert "retrieval_latency_ms" in data1
+    assert "llm_latency_ms" in data1
+    assert "total_latency_ms" in data1
+
+    assert data1["grounded"] is True
+    assert data1["grounding_status"] == "grounded"
+    assert data1["is_site_specific"] is False
+    assert len(data1["cited_sources"]) == 1
+    assert data1["cited_sources"][0]["chunk_id"] == "sql-injection_prevention"
+
+    conv_id = data1["conversation_id"]
+    assert conv_id is not None
+    assert len(conv_id) > 0
+
+    # Turn 2: Follow-up question passing existing conversation_id
+    mock_retriever.retrieve.return_value = RetrievalResult(
+        query="What about ORM frameworks?",
+        top_k=1,
+        latency_ms=10.0,
+        matches=[chunk],
+    )
+    mock_llm.generate.return_value = LLMResponse(
+        content="Modern ORMs use parameterized queries under the hood [E1].",
+        raw_content="Modern ORMs use parameterized queries under the hood [E1].",
+        model="mock-cyber-v1",
+        finish_reason="stop",
+        latency_ms=75.0,
+        usage={"prompt_tokens": 180, "completion_tokens": 20, "total_tokens": 200},
+    )
+
+    resp_turn2 = client.post(
+        "/api/v1/chat",
+        json={"message": "What about ORM frameworks?", "conversation_id": conv_id},
+    )
+    assert resp_turn2.status_code == 200
+    data2 = resp_turn2.json()
+    assert data2["conversation_id"] == conv_id
+
+    # Verify memory contains the multi-turn exchange
+    store = get_conversation_store()
+    history = store.get_history(conv_id)
+    assert len(history) == 4  # user1, assistant1, user2, assistant2
+
+    # Validation tests for invalid inputs from scanner frontend
+    # Empty message
+    resp_empty = client.post("/api/v1/chat", json={"message": ""})
+    assert resp_empty.status_code == 422
+    assert "errors" in resp_empty.json()
+
+    # Whitespace-only message
+    resp_ws = client.post("/api/v1/chat", json={"message": "    \n   "})
+    assert resp_ws.status_code == 422
+
+    # Message exceeding 2000 chars
+    resp_oversize = client.post("/api/v1/chat", json={"message": "A" * 2001})
+    assert resp_oversize.status_code == 422
+
+    # Invalid conversation_id format (spaces / special symbols)
+    resp_bad_conv = client.post(
+        "/api/v1/chat",
+        json={"message": "Test valid message", "conversation_id": "invalid session id with spaces!"},
+    )
+    assert resp_bad_conv.status_code == 422
+
+    # Security check: zero credentials exposed
+    assert "GROQ_API_KEY" not in str(data1)
+    assert "gsk_" not in str(data1)
+    assert "GROQ_API_KEY" not in str(data2)
+    assert "gsk_" not in str(data2)
 
 
 def test_health_then_chat_unmocked_lifecycle_preservation(client):

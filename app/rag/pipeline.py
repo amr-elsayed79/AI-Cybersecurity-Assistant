@@ -189,8 +189,8 @@ class RAGChatPipeline:
         # 2. Linguistic & Intent Analysis (100% Offline)
         intent_result: IntentAnalysisResult = analyze_query_intent(cleaned_query)
         detected_lang = intent_result.language.value
-        # Resolve target communication language: default Arabic if Arabic detected, else English
-        comm_lang = "ar" if detected_lang == "ar" else "en"
+        # Resolve target communication language: default Arabic if Arabic or mixed query detected, else English
+        comm_lang = "ar" if detected_lang in ("ar", "mixed") else "en"
         is_site_specific = intent_result.is_site_specific
 
         # 3. Vector & Lexical Hybrid Retrieval

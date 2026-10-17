@@ -49,7 +49,10 @@ TECHNICAL_TERMS = [
     r"\bsqli\b", r"\bsql\s+injection\b", r"\bxss\b", r"\bcross[- ]site\s+scripting\b",
     r"\bcsrf\b", r"\bssrf\b", r"\bxxe\b", r"\bidor\b", r"\bbola\b", r"\bjwt\b",
     r"\bssti\b", r"\blfi\b", r"\brfi\b", r"\bcommand\s+injection\b", r"\brce\b",
+    r"\bnosqli\b", r"\bnosql\s+injection\b", r"\bpath\s+traversal\b", r"\bdirectory\s+traversal\b",
     r"\bclickjacking\b", r"\bcors\b", r"\boauth\b", r"\blog4shell\b",
+    r"\bopen\s+redirect\b", r"\bweb\s+cache\s+poisoning\b", r"\bredos\b", r"\bcrlf\b",
+    r"\bxpathi\b", r"\bldapi\b", r"\bfile\s+upload\b", r"\brace\s+condition\b",
     r"\bcwe(?:-\d+)?\b", r"\bowasp(?:\s+top\s+10)?(?:\s+[a-z]\d{2}(?::\d{4})?)?\b",
     r"\bcve(?:-\d{4}-\d+)?\b", r"\bnode\.?js\b", r"\bpython\b", r"\bjavascript\b",
     r"\bapi\b", r"\bgraphql\b", r"\brest\b", r"\bcookie\b", r"\bsession\b",
@@ -65,19 +68,28 @@ EDUCATIONAL_SIGNALS_EN = [
 ]
 EDUCATIONAL_SIGNALS_AR = [
     r"ما\s+هو\b", r"ما\s+هي\b", r"كيف\s+يعمل\b", r"كيف\s+تعمل\b",
-    r"اشرح\b", r"وضح\b", r"مفهوم\b", r"نظرة\s+عامة\b", r"آلية\b",
-    r"ماذا\s+يعني\b", r"ما\s+سبب\b", r"أسباب\b", r"مثال\s+على\b",
+    r"اشرح\b", r"اشرحلي\b", r"اشرح\s+لي\b", r"وضح\b", r"فهمني\b",
+    r"مفهوم\b", r"نظرة\s+عامة\b", r"آلية\b", r"ماذا\s+يعني\b",
+    r"يعني\s+(?:إيه|ايه)\b", r"(?:إيه|ايه)\s+هو\b", r"(?:إيه|ايه)\s+هي\b",
+    r"(?:إيه|ايه)\s+خطورة\b", r"ما\s+خطورة\b", r"خطورة\b",
+    r"ما\s+سبب\b", r"أسباب\b", r"مثال\s+على\b", r"بمثال\s+آمن\b",
+    r"بالمصري\b", r"بطريقة\s+بسيطة\b",
     r"كيف\s+يستغل\b", r"كيف\s+يقوم\s+المهاجم\b",
+    r"(?:إزاي|ازاي)\s+(?:بيشتغل|بتشتغل|بيحصل|بتعمل)\b",
+    r"(?:إزاي|ازاي)\s+(?:أكتشف|اكتشف|أعرف|اعرف)\b", r"دليل\s+كافي\b",
 ]
 
 # Prevention & Remediation Signals (English & Arabic)
 REMEDIATION_SIGNALS_EN = [
-    r"\bhow\s+(?:can\s+i|to)\s+(?:prevent|fix|remediate|secure|mitigate|patch|defend)\b",
+    r"\bhow\s+(?:can\s+i|do\s+i|to)\s+(?:prevent|fix|remediate|secure|mitigate|patch|defend)\b",
     r"\bprevention\b", r"\bremediation\b", r"\bmitigation\b", r"\bsecure\s+coding\b",
     r"\bbest\s+practices\b", r"\bprotect\s+against\b", r"\bhow\s+to\s+avoid\b",
 ]
 REMEDIATION_SIGNALS_AR = [
-    r"كيف\s+(?:أمنع|يمكن\s+منع|نمنع|أحمي|يمكن\s+حماية|نعالج|يمكن\s+معالجة|أصلح)\b",
+    r"كيف\s+(?:أمنع|يمكن\s+منع|نمنع|أحمي|يمكن\s+حماية|نعالج|يمكن\s+معالجة|أصلح|يمكن\s+الوقاية)\b",
+    r"(?:إزاي|ازاي)\s+(?:أحمي|احمي|أمنع|امنع|أتجنب|اتجنب|أوقف|اوقف|أصلح|اصلح|أعالج|اعالج|أحل|احل)\b",
+    r"طريقة\s+(?:الحماية|الوقاية|تجنب|منع|حل|علاج)\b",
+    r"الوقاية\s+من\b", r"حماية\s+من\b",
     r"طرق\s+الوقاية\b", r"إجراءات\s+الوقاية\b", r"كيفية\s+الحماية\b",
     r"أفضل\s+الممارسات\b", r"معالجة\b", r"تأمين\b", r"تصحيح\b",
 ]
@@ -89,6 +101,7 @@ COMPARISON_SIGNALS_EN = [
 ]
 COMPARISON_SIGNALS_AR = [
     r"الفرق\s+بين\b", r"مقارنة\s+بين\b", r"\bمقارنة\b", r"\bمقابل\b",
+    r"(?:إيه|ايه)\s+الفرق\s+بين\b",
 ]
 
 # Target Attachment Signals (URLs, IPs, Hostnames, Possessive Assets)
@@ -117,6 +130,7 @@ DIAGNOSTIC_SIGNALS_AR = [
     r"هل\s+يوجد\s+ثغرة\s+في\b",
     r"(?:افحص|اختبر|تحقق\s+من|دقق)\s+(?:موقع|تطبيق|خادم|سيرفر|https?://)",
     r"هل\s+نظامنا\s+(?:معرض|مصاب)\b",
+    r"(?:إزاي|ازاي|كيف)\s+أعرف\s+لو\s+.*?\s+(?:مصاب|مخترق|فيه\s+ثغرة)",
 ]
 
 

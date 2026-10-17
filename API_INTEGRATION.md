@@ -61,9 +61,9 @@ Configuration is managed via environment variables and loaded through Pydantic B
    ```ini
    LLM_PROVIDER="groq"
    GROQ_API_KEY="gsk_..."
-   GROQ_MODEL="openai/gpt-oss-120b"
+   GROQ_MODEL="llama-3.3-70b-versatile"
    GROQ_TEMPERATURE=0.1
-   GROQ_MAX_TOKENS=1024
+   GROQ_MAX_TOKENS=2048
    GROQ_TIMEOUT_SECONDS=20.0
    GROQ_MAX_RETRIES=2
    ```
@@ -295,27 +295,63 @@ curl -X POST "http://127.0.0.1:8000/api/v1/chat" \
 
 ---
 
-## 12. Instructions for Integrating into the Scanner Dashboard
+## 12. Instructions for Integrating into the Scanner Dashboard ("Ask AI")
 
-To integrate this assistant into the teammate's vulnerability-scanner website without modifying scanner logic:
+This section guides the Team Leader or frontend integration engineer on embedding the assistant as an **Ask AI** feature inside the teammate's vulnerability scanner website.
 
-1. **Decoupled Architecture:** Keep the scanner backend and this assistant running as separate services. The scanner website frontend can embed the assistant via an iframe or invoke the `/api/v1/chat` endpoint directly.
-2. **CORS Configuration:**
-   - By default, `CORS_ALLOW_ORIGINS` in `app/config.py` already includes:
-     - `http://localhost:3000`
-     - `http://127.0.0.1:3000`
-     - `http://localhost:8000`
-     - `http://127.0.0.1:8000`
-   - If the scanner website runs on an alternative origin or port (e.g. `http://localhost:5173`), update `CORS_ALLOW_ORIGINS` in `.env` or `app/config.py`:
-     ```ini
-     CORS_ALLOW_ORIGINS=["http://localhost:3000", "http://localhost:8000", "http://127.0.0.1:3000", "http://127.0.0.1:8000", "http://localhost:5173"]
-     ```
-3. **Recommended Production Reverse Proxy:**
-   - Instead of exposing two separate web origins to the browser, configure an Nginx or Caddy reverse proxy on the host:
-     - `/` and `/scanner/*` → Routes to teammate's scanner dashboard.
-     - `/assistant/api/*` → Proxied to `http://127.0.0.1:8000/api/*`.
-     - `/assistant/dashboard/*` → Proxied to `http://127.0.0.1:8000/dashboard/*`.
-   - This achieves same-origin API calls without requiring cross-origin credentials.
+### 12.1 Strict Decoupled Boundary
+- **Independent Services:** The AI Cybersecurity Assistant runs as an isolated, standalone FastAPI service (`http://127.0.0.1:8000`).
+- **No Shared Scanner Code:** Do not modify, copy, or rebuild the teammate's vulnerability scanner code inside this repository.
+- **Defensive Guidance Scope:** The assistant provides general defensive guidance, remediation, and vulnerability mechanisms. It does not perform active probing or confirm vulnerabilities on live scanner targets.
+
+### 12.2 Integration Patterns
+
+#### Pattern A: Direct API Integration (Recommended for Custom UI)
+The teammate's scanner web application can render an **Ask AI** modal, sidebar, or dedicated tab that makes direct HTTP requests to the assistant:
+1. Send `POST http://127.0.0.1:8000/api/v1/chat` with `{ "message": userQuery, "conversation_id": activeSessionId }`.
+2. On the first turn, omit `conversation_id` or send `null`. Store the `conversation_id` returned in the response in client runtime state.
+3. On follow-up questions, include the stored `conversation_id` to maintain conversation context (up to 6 turns).
+4. Display `response.answer` in the UI. If `response.is_site_specific` is true, display a non-diagnostic disclaimer.
+5. Render citations from `response.cited_sources` to show grounding evidence if desired.
+
+#### Pattern B: Embedded IFrame
+The scanner frontend can embed the assistant's built-in dashboard in an `<iframe>`:
+```html
+<iframe
+    src="http://127.0.0.1:8000/dashboard/"
+    title="Ask AI Cybersecurity Assistant"
+    style="width: 100%; height: 650px; border: 1px solid #1e293b; border-radius: 8px;"
+></iframe>
+```
+*Note on Dashboard UI:* The built-in dashboard at `/dashboard/` has been streamlined: all internal diagnostic widgets and evidence panels (`Knowledge Evidence System Health`, `Provider: Groq`, `Healthy`, `588 KB Chunks`) have been removed. It presents a clean, full-width chat interface with an instant Arabic/English language toggle and safe Markdown rendering.
+
+### 12.3 CORS Configuration for Scanner Origin
+If the scanner frontend runs on a separate origin or port (e.g. Vite dev server on port `5173`, Next.js on port `3000`, or a custom local port), configure `CORS_ALLOW_ORIGINS` in `.env`:
+
+```ini
+# Comma-separated format:
+CORS_ALLOW_ORIGINS="http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173"
+
+# Or JSON array format:
+CORS_ALLOW_ORIGINS='["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"]'
+```
+
+*Default permitted origins (if omitted):*
+- `http://localhost:3000`
+- `http://localhost:8000`
+- `http://127.0.0.1:3000`
+- `http://127.0.0.1:8000`
+
+### 12.4 Security & Production Deployment Considerations
+1. **API Keys Stays Server-Side:** Never expose `GROQ_API_KEY` to the client-side browser or scanner frontend. The browser communicates solely with the FastAPI assistant API (`/api/v1/chat`).
+2. **Reverse Proxy (Single-Domain Setup):**
+   In production or unified local development, place both the scanner and assistant behind a reverse proxy (e.g., Nginx, Caddy, or Traefik):
+   - `/scanner/*` → Routes to scanner web server
+   - `/api/v1/chat` and `/health` → Routes to `http://127.0.0.1:8000`
+   - Eliminates cross-origin CORS complexity entirely.
+3. **Graceful Error Handling:**
+   - On validation errors (HTTP 422), display the user-friendly message from `response.data.errors`.
+   - On server or provider errors (HTTP 503 / 500), the API automatically masks internal stack traces and secrets, returning a generic safe error message.
 
 ---
 

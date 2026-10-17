@@ -23,16 +23,14 @@
         </div>
 
         <div class="header-right">
-            <!-- LLM Provider Mode Badge -->
-            <div id="llm-mode-badge" class="mode-badge mode-unknown" title="LLM Provider Mode">
-                <span class="mode-indicator"></span>
-                <span id="llm-mode-text">Checking Provider...</span>
-            </div>
-
-            <!-- Health Status Pill -->
-            <div id="system-health-pill" class="health-pill health-unknown" title="Backend Health Status">
-                <span class="status-dot"></span>
-                <span id="system-health-text">Connecting...</span>
+            <!-- Language Selection Buttons -->
+            <div class="lang-switch-group" role="group" aria-label="Language selection">
+                <button id="lang-btn-ar" class="btn lang-btn" aria-label="Switch interface to Arabic" aria-pressed="false" title="تغيير الواجهة إلى العربية">
+                    العربية
+                </button>
+                <button id="lang-btn-en" class="btn lang-btn active" aria-label="Switch interface to English" aria-pressed="true" title="Switch interface to English">
+                    English
+                </button>
             </div>
         </div>
     </header>
@@ -52,10 +50,6 @@
         <!-- Left: Chat Workspace -->
         <section class="chat-workspace" aria-label="Cybersecurity Chat Interface">
             <div class="chat-toolbar">
-                <div class="session-info">
-                    <span class="session-label">Session ID:</span>
-                    <span id="active-session-id" class="session-id-pill" title="Volatile in-memory session identifier">Fresh Conversation</span>
-                </div>
                 <button id="new-chat-btn" class="btn btn-secondary" title="Clear conversation ID and visible message history">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -73,7 +67,7 @@
                     <h2>Welcome to the AI Cybersecurity Assistant</h2>
                     <p>
                         This assistant answers defensive software security and web-application vulnerability questions 
-                        grounded exclusively in the verified Master Knowledge Base (74 canonical vulnerabilities, 588 indexed chunks).
+                        grounded exclusively in the verified Master Knowledge Base (74 canonical vulnerabilities).
                     </p>
                     <div class="quick-prompts-section">
                         <span class="quick-prompts-label">Try an example question:</span>
@@ -131,113 +125,6 @@
                 </div>
             </form>
         </section>
-
-        <!-- Right: Evidence & Diagnostics Panel -->
-        <aside class="evidence-panel" aria-label="Evidence and Knowledge Provenance">
-            <!-- Panel Navigation Tabs -->
-            <div class="panel-tabs" role="tablist">
-                <button id="tab-btn-evidence" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-content-evidence">
-                    Knowledge Evidence
-                </button>
-                <button id="tab-btn-diagnostics" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-content-diagnostics">
-                    System Health
-                </button>
-            </div>
-
-            <!-- Tab 1: Evidence & Sources for Active Turn -->
-            <div id="tab-content-evidence" class="tab-content active" role="tabpanel">
-                <!-- Grounding & Attribution Status Summary -->
-                <div class="attribution-card">
-                    <div class="card-header">
-                        <span class="card-title">Turn Attribution Status</span>
-                        <span id="turn-status-badge" class="badge badge-neutral">No Active Query</span>
-                    </div>
-                    <div id="turn-metrics-row" class="metrics-row hidden">
-                        <span class="metric-item"><strong>Lang:</strong> <span id="turn-lang">-</span></span>
-                        <span class="metric-item"><strong>Retrieval:</strong> <span id="turn-retrieval-time">0 ms</span></span>
-                        <span class="metric-item"><strong>LLM:</strong> <span id="turn-llm-time">0 ms</span></span>
-                        <span class="metric-item"><strong>Total:</strong> <span id="turn-total-time">0 ms</span></span>
-                    </div>
-                    <p id="turn-status-desc" class="card-desc">
-                        Submit a question to inspect retrieved Knowledge Base records, citations, and attribution verification.
-                    </p>
-                </div>
-
-                <!-- Cited Sources Section -->
-                <div class="sources-section">
-                    <h3 class="section-title">
-                        <span>Cited Sources</span>
-                        <span id="cited-count-badge" class="count-badge">0</span>
-                    </h3>
-                    <p class="section-subtitle">Verified KB chunks referenced in the generated narrative.</p>
-                    <div id="cited-sources-list" class="sources-list">
-                        <div class="sources-empty">No cited sources for this turn.</div>
-                    </div>
-                </div>
-
-                <!-- Retrieved Sources Section (Context Candidates) -->
-                <div class="sources-section">
-                    <h3 class="section-title">
-                        <span>Retrieved Candidates</span>
-                        <span id="retrieved-count-badge" class="count-badge">0</span>
-                    </h3>
-                    <p class="section-subtitle">Top chunks retrieved by hybrid search and injected into context.</p>
-                    <div id="retrieved-sources-list" class="sources-list">
-                        <div class="sources-empty">No retrieved candidates.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 2: System Health Diagnostics -->
-            <div id="tab-content-diagnostics" class="tab-content" role="tabpanel">
-                <div class="diagnostics-card">
-                    <div class="card-header">
-                        <span class="card-title">Backend Architecture</span>
-                        <button id="refresh-health-btn" class="btn btn-tiny" title="Re-check health">Refresh</button>
-                    </div>
-
-                    <ul class="diagnostics-list">
-                        <li class="diag-item">
-                            <span class="diag-label">API Health:</span>
-                            <span id="diag-status" class="diag-value">Unknown</span>
-                        </li>
-                        <li class="diag-item">
-                            <span class="diag-label">App Version:</span>
-                            <span id="diag-version" class="diag-value">-</span>
-                        </li>
-                        <li class="diag-item">
-                            <span class="diag-label">Master KB Hash:</span>
-                            <span id="diag-kb-verified" class="diag-value">-</span>
-                        </li>
-                        <li class="diag-item">
-                            <span class="diag-label">Vector Store Status:</span>
-                            <span id="diag-vector-status" class="diag-value">-</span>
-                        </li>
-                        <li class="diag-item">
-                            <span class="diag-label">Indexed KB Points:</span>
-                            <span id="diag-points-count" class="diag-value">-</span>
-                        </li>
-                        <li class="diag-item">
-                            <span class="diag-label">Configured LLM:</span>
-                            <span id="diag-llm-provider" class="diag-value">-</span>
-                        </li>
-                        <li class="diag-item">
-                            <span class="diag-label">LLM Credentials:</span>
-                            <span id="diag-llm-configured" class="diag-value">-</span>
-                        </li>
-                    </ul>
-
-                    <div class="security-notice">
-                        <strong>Security &amp; Scope Notice:</strong>
-                        <p>
-                            Bound strictly to <code>127.0.0.1</code> for local evaluation. 
-                            Conversation storage is in-process and volatile (lost on server restart). 
-                            Health checks perform local verification only with zero external network or Groq API calls.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </aside>
     </main>
 
     <!-- Scripts -->

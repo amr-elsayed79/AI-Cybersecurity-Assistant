@@ -1,0 +1,194 @@
+[
+  {
+    "question_id": "eval-acronym-01",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "XSS",
+    "expected_vulnerability_ids": [
+      "xss"
+    ],
+    "rationale": "XSS is the canonical acronym and verified alias for Cross-Site Scripting (id: xss, alias: ['XSS']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-02",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "SSRF",
+    "expected_vulnerability_ids": [
+      "ssrf"
+    ],
+    "rationale": "SSRF is the canonical acronym and verified alias for Server-Side Request Forgery (id: ssrf, alias: ['SSRF']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-03",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "IDOR",
+    "expected_vulnerability_ids": [
+      "bola-idor"
+    ],
+    "rationale": "IDOR is a verified alias for BOLA / IDOR (id: bola-idor, aliases: ['Broken Object Level Authorization', 'IDOR']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-04",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "BOLA",
+    "expected_vulnerability_ids": [
+      "bola-idor"
+    ],
+    "rationale": "BOLA is the leading acronym and concept in the title and aliases for BOLA / IDOR (id: bola-idor, aliases: ['Broken Object Level Authorization', 'IDOR']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-05",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "XXE",
+    "expected_vulnerability_ids": [
+      "xxe"
+    ],
+    "rationale": "XXE is the canonical acronym and verified alias for XML External Entity Injection (id: xxe, alias: ['XXE']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-06",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "SQLi",
+    "expected_vulnerability_ids": [
+      "sql-injection"
+    ],
+    "rationale": "SQLi is the canonical shorthand alias for SQL Injection (id: sql-injection, alias: ['SQLi']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-07",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "NoSQLi",
+    "expected_vulnerability_ids": [
+      "nosql-injection"
+    ],
+    "rationale": "NoSQLi is the canonical shorthand alias for NoSQL Injection (id: nosql-injection, alias: ['NoSQLi']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-08",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "SSTI",
+    "expected_vulnerability_ids": [
+      "ssti"
+    ],
+    "rationale": "SSTI is the canonical acronym and verified alias for Server-Side Template Injection (id: ssti, alias: ['SSTI']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-09",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "LFI",
+    "expected_vulnerability_ids": [
+      "lfi"
+    ],
+    "rationale": "LFI is the canonical acronym and verified alias for Local File Inclusion (id: lfi, alias: ['LFI']) in the Master KB."
+  },
+  {
+    "question_id": "eval-acronym-10",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "ReDoS",
+    "expected_vulnerability_ids": [
+      "redos"
+    ],
+    "rationale": "ReDoS is the canonical acronym and verified alias for Regular Expression Denial of Service (id: redos, alias: ['ReDoS']) in the Master KB."
+  },
+  {
+    "question_id": "eval-boundary-01",
+    "query_type": "comparison",
+    "language": "en",
+    "query": "Difference between SQL injection and NoSQL injection",
+    "expected_vulnerability_ids": [
+      "sql-injection",
+      "nosql-injection"
+    ],
+    "rationale": "Explicit comparative query requiring retrieval of both SQL Injection (id: sql-injection) and NoSQL Injection (id: nosql-injection) canonical records."
+  },
+  {
+    "question_id": "eval-boundary-02",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "NoSQL injection mechanisms in document databases",
+    "expected_vulnerability_ids": [
+      "nosql-injection"
+    ],
+    "rationale": "Targeted single-concept query regarding NoSQL injection (id: nosql-injection). Although relational SQL injection (id: sql-injection) is a semantic sibling, it must not be treated as a valid target for this query."
+  },
+  {
+    "question_id": "eval-boundary-03",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "XPath Injection syntax and queries",
+    "expected_vulnerability_ids": [
+      "xpath-injection"
+    ],
+    "rationale": "Targeted single-concept query regarding XPath injection (id: xpath-injection). Semantically adjacent XML injection types such as XSLT injection (id: xslt-injection) or XXE (id: xxe) are distractors and not valid targets."
+  },
+  {
+    "question_id": "eval-boundary-04",
+    "query_type": "single_concept",
+    "language": "en",
+    "query": "XSLT stylesheet injection",
+    "expected_vulnerability_ids": [
+      "xslt-injection"
+    ],
+    "rationale": "Targeted single-concept query regarding XSLT injection (id: xslt-injection). Semantically adjacent XML technologies like XPath injection (id: xpath-injection) or XXE (id: xxe) are distractors and not valid targets."
+  },
+  {
+    "question_id": "eval-boundary-05",
+    "query_type": "comparison",
+    "language": "en",
+    "query": "Compare Path Traversal and Local File Inclusion",
+    "expected_vulnerability_ids": [
+      "path-traversal",
+      "lfi"
+    ],
+    "rationale": "Explicit comparative query requiring retrieval of both Path Traversal (id: path-traversal) and Local File Inclusion (id: lfi) canonical records."
+  },
+  {
+    "question_id": "eval-oos-01",
+    "query_type": "out_of_scope",
+    "language": "en",
+    "query": "What are the lattice-based cryptographic algorithms selected by NIST for post-quantum security?",
+    "expected_vulnerability_ids": [],
+    "rationale": "Post-quantum lattice cryptography (e.g., ML-KEM/Kyber, ML-DSA/Dilithium) is theoretical cryptography, entirely outside the 74 web application security records in the Master KB."
+  },
+  {
+    "question_id": "eval-oos-02",
+    "query_type": "out_of_scope",
+    "language": "en",
+    "query": "BGP route hijacking mitigation using RPKI and Route Origin Authorizations",
+    "expected_vulnerability_ids": [],
+    "rationale": "BGP routing infrastructure and RPKI ROA validation are internet routing architecture topics, not web application security vulnerabilities represented in the Master KB."
+  },
+  {
+    "question_id": "eval-oos-03",
+    "query_type": "out_of_scope",
+    "language": "en",
+    "query": "How do you train an object detection model with YOLO and PyTorch?",
+    "expected_vulnerability_ids": [],
+    "rationale": "Machine learning model training and computer vision frameworks are software development/AI topics, not represented in the Master KB."
+  },
+  {
+    "question_id": "eval-oos-04",
+    "query_type": "out_of_scope",
+    "language": "en",
+    "query": "How to bake traditional French sourdough bread at home?",
+    "expected_vulnerability_ids": [],
+    "rationale": "Culinary baking instructions are completely out-of-domain and non-technical, testing the absolute lower bound of semantic noise."
+  },
+  {
+    "question_id": "eval-oos-05",
+    "query_type": "out_of_scope",
+    "language": "en",
+    "query": "What are the corporate tax depreciation methods under GAAP accounting?",
+    "expected_vulnerability_ids": [],
+    "rationale": "Financial accounting and corporate tax regulations are entirely outside the technical domain of the cybersecurity vulnerability Master KB."
+  }
+]

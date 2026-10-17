@@ -151,7 +151,7 @@ Copy-Item .env.example .env
 | `GROQ_API_KEY` | `""` | Groq API Key (required only when `LLM_PROVIDER="groq"`) |
 | `GROQ_MODEL` | `"llama-3.3-70b-versatile"` | Active model identifier (e.g. `llama-3.3-70b-versatile` or `openai/gpt-oss-120b`) |
 | `GROQ_TEMPERATURE` | `0.1` | Low temperature for grounded generation |
-| `GROQ_MAX_TOKENS` | `1024` | Maximum completion token budget |
+| `GROQ_MAX_TOKENS` | `2048` | Maximum completion token budget |
 | `GROQ_TIMEOUT_SECONDS`| `20.0` | Client timeout per API call |
 | `GROQ_MAX_RETRIES` | `2` | Automatic retry budget on rate limits / network blips |
 
@@ -162,21 +162,28 @@ Copy-Item .env.example .env
 
 ## 7. How to Build & Index the Master KB
 
-The project includes an embedded local Qdrant database in `data/qdrant_db/` that is **already pre-indexed** with all 588 substantive chunks and is ready for immediate evaluation. You do **not** need to run indexing during normal evaluation or testing.
+The local embedded Qdrant database directory (`data/qdrant_db/`) is intentionally excluded from Git tracking via `.gitignore` to prevent binary bloat and platform lock conflicts.
 
-### Re-running Indexing
-If the index ever needs to be rebuilt from scratch, run `scripts/index_kb.py`:
+### First-Time Indexing for Fresh Clones
+After cloning the repository and setting up your virtual environment, generate the local Qdrant vector index from the Master KB:
 
 ```powershell
-# Safe idempotent upsert (re-indexes without dropping existing points)
+# Index Master KB chunks into local Qdrant (588 chunks)
 python scripts/index_kb.py
+```
 
+Once indexed, the vector store is ready for evaluation and testing. Re-running `python scripts/index_kb.py` without `--recreate` is idempotent (upserts without creating duplicates).
+
+### Recreating the Index
+To drop and recreate the collection from scratch:
+
+```powershell
 # Complete recreation (drops existing collection before re-indexing)
 python scripts/index_kb.py --recreate
 ```
 
 > [!WARNING]
-> **Destructive Operation:** Running `python scripts/index_kb.py --recreate` explicitly deletes (`delete_collection`) the active `cybersecurity_kb_chunks` collection from `data/qdrant_db/` before re-indexing. **Do not run this command during standard evaluation.**
+> **Destructive Operation:** Running `python scripts/index_kb.py --recreate` explicitly deletes (`delete_collection`) the active `cybersecurity_kb_chunks` collection from `data/qdrant_db/` before re-indexing. Do not run this command during active evaluation or server operation.
 
 ### Indexing Safety & Idempotency
 - **Chunk UUID Determinism:** Every chunk ID is deterministically mapped to a UUIDv5. Re-running indexing without `--recreate` cleanly upserts without creating duplicate entries.
@@ -307,12 +314,12 @@ The service supports two interchangeable LLM backends configured in `.env`:
 
 All tests run 100% offline with zero external network requests using `LLM_PROVIDER="mock"`.
 
-### Run the Full Offline Test Suite (161 Tests)
+### Run the Full Offline Test Suite (192 Tests)
 
 ```powershell
 python -m pytest -q
 ```
-*Expected output:* `161 passed in ~30s`.
+*Expected output:* `192 passed in ~35s`.
 
 ### Run Focused Subsystem Tests
 
@@ -320,17 +327,26 @@ python -m pytest -q
 # Vector retrieval, BM25 fusion, and concurrency thread-safety tests (19 tests)
 pytest tests/test_retrieval.py -v
 
-# FastAPI endpoints, input validation, and Qdrant lifecycle tests (17 tests)
+# FastAPI endpoints, input validation, and Qdrant lifecycle tests (19 tests)
 pytest tests/test_api.py -v
 
 # RAG context construction and evidence label tests (12 tests)
 pytest tests/test_context_builder.py -v
 
 # Citation verification and attribution guardrail tests (20 tests)
-pytest tests/test_pipeline.py -v
+pytest tests/test_rag_pipeline.py -v
 
 # Stage C2 bounded offline matrix tests (32 tests)
 pytest tests/test_stage_c2_offline.py -v
+
+# Arabic RAG quality, intent classification, and bilingual handling (21 tests)
+pytest tests/test_arabic_rag_and_intent.py -v
+
+# Acronym, distractor boundary, and noise evaluation tests (20 tests)
+pytest tests/test_acronym_and_distractor_evaluation.py -v
+
+# Frontend dashboard serving, XSS prevention, and panel removal (10 tests)
+pytest tests/test_dashboard.py -v
 ```
 
 ---
@@ -369,5 +385,5 @@ For detailed integration guides, error response formats, and payload structures 
 | **Canonical Vulnerability Records** | 74 records |
 | **Active Scanner Scenarios Covered** | 119 scenarios (represented through 74 canonical records; no separate 1:1 mapping verified) |
 | **Indexed Semantic Chunks** | 588 points in Qdrant (`cybersecurity_kb_chunks`) |
-| **Automated Regression Test Suite** | 161 passed / 0 failed (100% offline) |
+| **Automated Regression Test Suite** | 192 passed / 0 failed (100% offline) |
 | **Completed Validation Stages** | Phase 1–4, Stage C1, Stage C2-A, Stage C2-B, Stage C3-A through C3-H |

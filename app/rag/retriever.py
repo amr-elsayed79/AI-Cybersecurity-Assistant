@@ -32,6 +32,103 @@ def generate_chunk_uuid(chunk_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk_id))
 
 
+# ---------------------------------------------------------------------------
+# Verified KB-grounded Acronym and Alias Mappings
+# Strictly sourced from data/master/ai_security_vulnerability_kb_master_v0.2.json
+# ---------------------------------------------------------------------------
+VERIFIED_ACRONYM_MAP = {
+    r"\bXXE\b": "XML External Entity Injection",
+    r"\bSSTI\b": "Server-Side Template Injection",
+    r"\bSSRF\b": "Server-Side Request Forgery",
+    r"\bXSS\b": "Cross-Site Scripting",
+    r"\bIDOR\b": "Broken Object Level Authorization IDOR",
+    r"\bBOLA\b": "Broken Object Level Authorization",
+    r"\bSQLi\b": "SQL Injection",
+    r"\bNoSQLi\b": "NoSQL Injection",
+    r"\bLFI\b": "Local File Inclusion",
+    r"\bReDoS\b": "Regular Expression Denial of Service",
+    r"\bCRLF\b": "CRLF Injection HTTP Response Splitting",
+    r"\bXPathi\b": "XPath Injection",
+    r"\bLDAPi\b": "LDAP Injection",
+}
+
+VERIFIED_ALIAS_MAP = {
+    r"\bNoSQL\s+injection\b": "NoSQLi",
+    r"\bSQL\s+injection\b": "SQLi",
+    r"\bPath\s+Traversal\b": "Directory Traversal",
+    r"\bDirectory\s+Traversal\b": "Path Traversal",
+}
+
+VERIFIED_ARABIC_CONCEPT_MAP = {
+    # OS Command Injection
+    r"حقن\s+أوامر\s+النظام|أوامر\s+نظام\s+التشغيل|حقن\s+الأوامر|حقن\s+اوامر": "OS Command Injection",
+    # SQL Injection
+    r"حقن\s+لغة\s+الاستعلامات(?: البنيوية)?|حقن\s+إس\s*كيو\s*إل|حقن\s+قواعد\s+البيانات": "SQL Injection",
+    # NoSQL Injection
+    r"حقن\s+(?:نو\s*إس\s*كيو\s*إل|نوسيكول)": "NoSQL Injection",
+    # SSRF
+    r"تزوير\s+الطلبات\s+عبر\s+الخوادم|تزوير\s+طلب\s+من\s+جانب\s+الخادم": "Server-Side Request Forgery SSRF",
+    # SSTI
+    r"حقن\s+القوالب(?: من جانب الخادم)?|حقن\s+قوالب": "Server-Side Template Injection SSTI",
+    # XXE
+    r"حقن\s+الكيانات\s+الخارجية|كيانات\s+إكس\s*إم\s*إل\s+الخارجية": "XML External Entity Injection XXE",
+    # XSS
+    r"البرمجة\s+النصية\s+عبر\s+المواقع|البرمجة\s+عبر\s+المواقع|نصوص\s+برمجية\s+عبر\s+المواقع": "Cross-Site Scripting XSS",
+    # Path Traversal / Directory Traversal
+    r"تجاوز\s+مسار\s+الملفات|تجاوز\s+المسار|تخطي\s+الدليل|اجتياز\s+المسار": "Path Traversal Directory Traversal",
+    # LFI / RFI
+    r"تضمين\s+الملفات\s+المحلية|تضمين\s+ملف\s+محلي": "Local File Inclusion LFI",
+    r"تضمين\s+الملفات\s+عن\s+بعد": "Remote File Inclusion RFI",
+    # Broken Access Control / IDOR / BOLA
+    r"كسر\s+التحكم\s+بالوصول|خلل\s+التحكم\s+في\s+الوصول|التحكم\s+في\s+الوصول\s+المعطوب": "Broken Access Control",
+    r"صلاحيات\s+الكائنات|الوصول\s+إلى\s+الكائنات\s+على\s+مستوى\s+الكائن|معرف\s+كائن\s+غير\s+مباشر": "Broken Object Level Authorization IDOR",
+    # CSRF
+    r"تزوير\s+الطلب\s+عبر\s+المواقع": "Cross-Site Request Forgery CSRF",
+    # CRLF / HTTP Response Splitting
+    r"انقسام\s+استجابة\s+HTTP|حقن\s+CRLF": "CRLF Injection HTTP Response Splitting",
+    # ReDoS
+    r"حجب\s+الخدمة\s+بالتعبيرات\s+النمطية|حجب\s+الخدمة\s+عبر\s+التعبيرات\s+القياسية": "Regular Expression Denial of Service ReDoS",
+    # Session Fixation
+    r"تثبيت\s+الجلسة|تثبيت\s+جلسات\s+المستخدم": "Session Fixation",
+    # Web Cache Poisoning
+    r"تسميم\s+ذاكرة\s+التخزين\s+المؤقت|تسميم\s+الكاش": "Web Cache Poisoning",
+    # Open Redirect
+    r"إعادة\s+التوجيه\s+المفتوحة|إعادة\s+توجيه\s+غير\s+موثوقة": "Open Redirect",
+    # Clickjacking
+    r"خطف\s+النقرات|اختطاف\s+النقرات": "Clickjacking",
+    # Unrestricted File Upload
+    r"رفع\s+ملفات\s+غير\s+آمن|رفع\s+الملفات\s+الخطرة": "Unrestricted/Unsafe File Upload",
+    # Race Condition
+    r"حالة\s+السباق|شرط\s+السباق": "Race Condition TOCTOU",
+    # Brute Force
+    r"الهجوم\s+بالقوة\s+الغاشمة|القوة\s+الغاشمة": "Brute Force Credential Brute Force",
+    # User Enumeration
+    r"حصر\s+المستخدمين|تعداد\s+الحسابات": "User Enumeration Account Enumeration",
+}
+
+
+def expand_query_aliases(query: str) -> str:
+    """Expand verified technical acronyms, aliases, and Arabic security concepts using Master KB canonical terms.
+
+    Purely deterministic string augmentation without external calls.
+    Appends full canonical names or canonical aliases only when not already present in query.
+    """
+    expanded = query
+    for pat, full_name in VERIFIED_ACRONYM_MAP.items():
+        if re.search(pat, expanded, re.IGNORECASE):
+            if full_name.lower() not in expanded.lower():
+                expanded = f"{expanded} {full_name}"
+    for pat, alias in VERIFIED_ALIAS_MAP.items():
+        if re.search(pat, expanded, re.IGNORECASE):
+            if alias.lower() not in expanded.lower():
+                expanded = f"{expanded} {alias}"
+    for pat, canonical_term in VERIFIED_ARABIC_CONCEPT_MAP.items():
+        if re.search(pat, expanded, re.IGNORECASE):
+            if canonical_term.lower() not in expanded.lower():
+                expanded = f"{expanded} {canonical_term}"
+    return expanded
+
+
 class PurePythonBM25:
     """Lightweight in-memory Okapi BM25 index over semantic chunks."""
 
@@ -327,9 +424,11 @@ class QdrantVectorStore:
 
         k = top_k or settings.TOP_K_RETRIEVAL
 
+        search_query = expand_query_aliases(query.strip())
+
         # 1. Embed query
         t0 = time.perf_counter()
-        query_vector = self.embedder.embed_text(query.strip())
+        query_vector = self.embedder.embed_text(search_query)
         t1 = time.perf_counter()
         embed_ms = (t1 - t0) * 1000.0
 
@@ -367,7 +466,7 @@ class QdrantVectorStore:
         matches: List[RetrievedChunk] = []
 
         if use_hybrid and search_response.points:
-            bm25_scores = self.bm25.score(query.strip())
+            bm25_scores = self.bm25.score(search_query)
             max_bm25 = max(bm25_scores.values()) if bm25_scores else 1.0
 
             scored_candidates = []

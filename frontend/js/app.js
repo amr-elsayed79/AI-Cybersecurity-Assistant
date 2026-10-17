@@ -14,14 +14,15 @@
     let activeConversationId = null;
     let isRequestPending = false;
     let configuredProvider = 'unknown';
+    let currentInterfaceLang = 'en'; // 'en' or 'ar'
 
     // DOM Elements
     const elements = {
-        // Header & Status
-        llmModeBadge: document.getElementById('llm-mode-badge'),
-        llmModeText: document.getElementById('llm-mode-text'),
-        systemHealthPill: document.getElementById('system-health-pill'),
-        systemHealthText: document.getElementById('system-health-text'),
+        // Header & Language Controls
+        langBtnAr: document.getElementById('lang-btn-ar'),
+        langBtnEn: document.getElementById('lang-btn-en'),
+        langToggleBtn: document.getElementById('lang-toggle-btn'),
+        langToggleLabel: document.getElementById('lang-toggle-label'),
         mockWarningBanner: document.getElementById('mock-warning-banner'),
         
         // Chat Area
@@ -37,34 +38,7 @@
         chatInput: document.getElementById('chat-input'),
         charCounter: document.getElementById('char-counter'),
         sendBtn: document.getElementById('send-btn'),
-        quickPromptChips: document.querySelectorAll('.quick-prompt-chip'),
-
-        // Evidence & Diagnostics
-        tabBtnEvidence: document.getElementById('tab-btn-evidence'),
-        tabBtnDiagnostics: document.getElementById('tab-btn-diagnostics'),
-        tabContentEvidence: document.getElementById('tab-content-evidence'),
-        tabContentDiagnostics: document.getElementById('tab-content-diagnostics'),
-        turnStatusBadge: document.getElementById('turn-status-badge'),
-        turnMetricsRow: document.getElementById('turn-metrics-row'),
-        turnLang: document.getElementById('turn-lang'),
-        turnRetrievalTime: document.getElementById('turn-retrieval-time'),
-        turnLlmTime: document.getElementById('turn-llm-time'),
-        turnTotalTime: document.getElementById('turn-total-time'),
-        turnStatusDesc: document.getElementById('turn-status-desc'),
-        citedCountBadge: document.getElementById('cited-count-badge'),
-        citedSourcesList: document.getElementById('cited-sources-list'),
-        retrievedCountBadge: document.getElementById('retrieved-count-badge'),
-        retrievedSourcesList: document.getElementById('retrieved-sources-list'),
-        
-        // Diagnostics Panel
-        refreshHealthBtn: document.getElementById('refresh-health-btn'),
-        diagStatus: document.getElementById('diag-status'),
-        diagVersion: document.getElementById('diag-version'),
-        diagKbVerified: document.getElementById('diag-kb-verified'),
-        diagVectorStatus: document.getElementById('diag-vector-status'),
-        diagPointsCount: document.getElementById('diag-points-count'),
-        diagLlmProvider: document.getElementById('diag-llm-provider'),
-        diagLlmConfigured: document.getElementById('diag-llm-configured')
+        quickPromptChips: document.querySelectorAll('.quick-prompt-chip')
     };
 
     /**
@@ -78,27 +52,414 @@
     }
 
     /**
-     * Safely format message content by splitting paragraphs and preserving formatting without innerHTML.
+     * Interface string translations for English and Arabic.
+     * Technical IDs, citations, and vulnerability names remain untranslated.
+     */
+    const UI_TRANSLATIONS = {
+        en: {
+            langButtonLabel: 'العربية',
+            langButtonTitle: 'Switch interface to Arabic',
+            headerTitle: 'AI Cybersecurity Assistant',
+            headerSubtitle: 'Defensive Vulnerability RAG & Attribution Verification',
+            mockWarningText: 'MOCK MODE — Workflow testing only; answers are deterministic offline templates and not evidence of real LLM grounding or answer quality.',
+            sessionLabel: 'Session ID:',
+            freshConversation: 'Fresh Conversation',
+            newChatBtn: 'New Chat',
+            newChatTitle: 'Clear conversation ID and visible message history',
+            welcomeTitle: 'Welcome to the AI Cybersecurity Assistant',
+            welcomeDesc: 'This assistant answers defensive software security and web-application vulnerability questions grounded exclusively in the verified Master Knowledge Base (74 canonical vulnerabilities).',
+            quickPromptsLabel: 'Try an example question:',
+            quickPrompt1: 'Prevent SQL Injection',
+            quickPrompt2: 'Reflected vs Stored XSS',
+            quickPrompt3: 'حماية من حقن الأوامر (عربي)',
+            quickPrompt4: 'Site-Specific Test (SSRF)',
+            loadingText: 'Searching Knowledge Base & validating attribution...',
+            chatPlaceholder: 'Ask a cybersecurity question... (Enter to send, Shift+Enter for newline)',
+            chatInputAria: 'Ask a cybersecurity question',
+            sendBtn: 'Send',
+            tabEvidence: 'Knowledge Evidence',
+            tabDiagnostics: 'System Health',
+            turnCardTitle: 'Turn Attribution Status',
+            noActiveQuery: 'No Active Query',
+            turnDescEmpty: 'Submit a question to inspect retrieved Knowledge Base records, citations, and attribution verification.',
+            metricLang: 'Lang:',
+            metricRetrieval: 'Retrieval:',
+            metricLlm: 'LLM:',
+            metricTotal: 'Total:',
+            citedTitle: 'Cited Sources',
+            citedSubtitle: 'Verified KB chunks referenced in the generated narrative.',
+            citedEmpty: 'No cited sources for this turn.',
+            retrievedTitle: 'Retrieved Candidates',
+            retrievedSubtitle: 'Top chunks retrieved by hybrid search and injected into context.',
+            retrievedEmpty: 'No retrieved candidates.',
+            diagCardTitle: 'Backend Architecture',
+            refreshBtn: 'Refresh',
+            diagLabelApiHealth: 'API Health:',
+            diagLabelVersion: 'App Version:',
+            diagLabelKbHash: 'Master KB Hash:',
+            diagLabelVectorStatus: 'Vector Store Status:',
+            diagLabelPoints: 'Indexed KB Points:',
+            diagLabelLlmProvider: 'Configured LLM:',
+            diagLabelLlmCreds: 'LLM Credentials:',
+            secNoticeTitle: 'Security & Scope Notice:',
+            secNoticeDesc: 'Bound strictly to 127.0.0.1 for local evaluation. Conversation storage is in-process and volatile (lost on server restart). Health checks perform local verification only with zero external network or Groq API calls.'
+        },
+        ar: {
+            langButtonLabel: 'English',
+            langButtonTitle: 'تبديل واجهة العرض إلى الإنجليزية',
+            headerTitle: 'المساعد الأمني للذكاء الاصطناعي',
+            headerSubtitle: 'توليد الإجابات الأمنية والتحقق المباشر من مراجع الثغرات',
+            mockWarningText: 'وضع المحاكاة — لاختبار التدفق البرمجي فقط؛ الإجابات قوالب ثابتة وليست دليلاً على أداء النموذج الحقيقي.',
+            sessionLabel: 'معرّف الجلسة:',
+            freshConversation: 'محادثة جديدة',
+            newChatBtn: 'محادثة جديدة',
+            newChatTitle: 'مسح معرّف المحادثة وسجل الرسائل المعروض',
+            welcomeTitle: 'مرحباً بك في المساعد الأمني للذكاء الاصطناعي',
+            welcomeDesc: 'يقدم هذا المساعد إرشادات دفاعية متخصصة في أمن البرمجيات وثغرات تطبيقات الويب استناداً حصرياً إلى قاعدة المعرفة الأمنية المعتمدة (74 ثغرة معتمدة).',
+            quickPromptsLabel: 'جرّب أحد الأسئلة المقترحة:',
+            quickPrompt1: 'الوقاية من حقن SQL',
+            quickPrompt2: 'الفرق بين XSS المنعكس والمخزن',
+            quickPrompt3: 'حماية من حقن أوامر النظام',
+            quickPrompt4: 'اختبار هدف محدد (SSRF)',
+            loadingText: 'جاري البحث في قاعدة المعرفة والتحقق من الأدلة...',
+            chatPlaceholder: 'اطرح سؤالاً في الأمن السيبراني... (Enter للإرسال، Shift+Enter لسطر جديد)',
+            chatInputAria: 'اطرح سؤالاً في الأمن السيبراني',
+            sendBtn: 'إرسال',
+            tabEvidence: 'الأدلة والمصادر',
+            tabDiagnostics: 'حالة النظام',
+            turnCardTitle: 'حالة التحقق من أدلة الإجابة',
+            noActiveQuery: 'لا يوجد استعلام نشط',
+            turnDescEmpty: 'أرسل سؤالاً لعرض سجلات قاعدة المعرفة المسترجعة، والاستشهادات، والتحقق من الأدلة.',
+            metricLang: 'اللغة:',
+            metricRetrieval: 'الاسترجاع:',
+            metricLlm: 'النموذج:',
+            metricTotal: 'الإجمالي:',
+            citedTitle: 'المصادر المستشهد بها',
+            citedSubtitle: 'مقاطع المعرفة المعتمدة التي تم الاستشهاد بها في الإجابة.',
+            citedEmpty: 'لا توجد مصادر مستشهد بها لهذا الرد.',
+            retrievedTitle: 'المرشحات المسترجعة',
+            retrievedSubtitle: 'أبرز المقاطع المسترجعة بالبحث الهجين والمدرجة في السياق.',
+            retrievedEmpty: 'لا توجد مرشحات مسترجعة.',
+            diagCardTitle: 'بنية النظام الخلفية',
+            refreshBtn: 'تحديث',
+            diagLabelApiHealth: 'حالة الواجهة (API):',
+            diagLabelVersion: 'إصدار التطبيق:',
+            diagLabelKbHash: 'بصمة قاعدة المعرفة:',
+            diagLabelVectorStatus: 'حالة محرك المتجهات:',
+            diagLabelPoints: 'المقاطع المفهرسة:',
+            diagLabelLlmProvider: 'النموذج النشط:',
+            diagLabelLlmCreds: 'بيانات الاعتماد:',
+            secNoticeTitle: 'تنبيه الأمان والنطاق:',
+            secNoticeDesc: 'النظام مقيّد محلياً بعنوان 127.0.0.1 للتقييم الآمن. المحادثات مخزنة في الذاكرة المؤقتة. فحوصات الصحة تجري محلياً دون أي اتصالات خارجية.'
+        }
+    };
+
+    /**
+     * Switch UI interface language between English and Arabic.
+     * Preserves active conversation session and current chat feed.
+     */
+    function setInterfaceLanguage(lang) {
+        currentInterfaceLang = (lang === 'ar') ? 'ar' : 'en';
+        const isAr = (currentInterfaceLang === 'ar');
+        const t = UI_TRANSLATIONS[currentInterfaceLang];
+
+        // 1. Update HTML document direction and language attributes
+        document.documentElement.lang = currentInterfaceLang;
+        document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+
+        // 2. Update Language Selection Buttons (active class and aria-pressed state)
+        if (elements.langBtnAr) {
+            if (isAr) {
+                elements.langBtnAr.classList.add('active');
+                elements.langBtnAr.setAttribute('aria-pressed', 'true');
+            } else {
+                elements.langBtnAr.classList.remove('active');
+                elements.langBtnAr.setAttribute('aria-pressed', 'false');
+            }
+        }
+        if (elements.langBtnEn) {
+            if (!isAr) {
+                elements.langBtnEn.classList.add('active');
+                elements.langBtnEn.setAttribute('aria-pressed', 'true');
+            } else {
+                elements.langBtnEn.classList.remove('active');
+                elements.langBtnEn.setAttribute('aria-pressed', 'false');
+            }
+        }
+
+        // Legacy Language Toggle Button (fallback)
+        if (elements.langToggleLabel) {
+            elements.langToggleLabel.textContent = t.langButtonLabel;
+        }
+        if (elements.langToggleBtn) {
+            elements.langToggleBtn.title = t.langButtonTitle;
+        }
+
+        // 3. Update Header titles
+        const headerTitle = document.querySelector('.header-title');
+        if (headerTitle) headerTitle.textContent = t.headerTitle;
+        const headerSubtitle = document.querySelector('.header-subtitle');
+        if (headerSubtitle) headerSubtitle.textContent = t.headerSubtitle;
+
+        // 4. Update Chat Workspace Chrome
+        const sessionLabel = document.querySelector('.session-label');
+        if (sessionLabel) sessionLabel.textContent = t.sessionLabel;
+        if (!activeConversationId && elements.activeSessionId) {
+            elements.activeSessionId.textContent = t.freshConversation;
+        }
+        if (elements.newChatBtn) {
+            const btnText = elements.newChatBtn.lastChild;
+            if (btnText && btnText.nodeType === 3) {
+                btnText.textContent = ` ${t.newChatBtn}`;
+            }
+            elements.newChatBtn.title = t.newChatTitle;
+        }
+
+        // 5. Update Welcome Card
+        if (elements.welcomeMessage) {
+            const h2 = elements.welcomeMessage.querySelector('h2');
+            if (h2) h2.textContent = t.welcomeTitle;
+            const p = elements.welcomeMessage.querySelector('p');
+            if (p) p.textContent = t.welcomeDesc;
+            const qpLabel = elements.welcomeMessage.querySelector('.quick-prompts-label');
+            if (qpLabel) qpLabel.textContent = t.quickPromptsLabel;
+
+            const chips = elements.welcomeMessage.querySelectorAll('.quick-prompt-chip');
+            if (chips.length >= 4) {
+                chips[0].textContent = t.quickPrompt1;
+                chips[1].textContent = t.quickPrompt2;
+                chips[2].textContent = t.quickPrompt3;
+                chips[3].textContent = t.quickPrompt4;
+            }
+        }
+
+        // 6. Update Input Form & Controls
+        if (elements.chatInput) {
+            elements.chatInput.placeholder = t.chatPlaceholder;
+            elements.chatInput.setAttribute('aria-label', t.chatInputAria);
+        }
+        if (elements.sendBtn) {
+            const sendSpan = elements.sendBtn.querySelector('span');
+            if (sendSpan) sendSpan.textContent = t.sendBtn;
+            elements.sendBtn.title = t.sendBtn;
+        }
+        const loadingText = document.getElementById('loading-text');
+        if (loadingText) loadingText.textContent = t.loadingText;
+
+        // 7. Update Mock Banner
+        const bannerSpan = elements.mockWarningBanner.querySelector('.banner-text');
+        if (bannerSpan) {
+            bannerSpan.textContent = '';
+            const strongEl = document.createElement('strong');
+            strongEl.textContent = isAr ? 'وضع المحاكاة' : 'MOCK MODE';
+            bannerSpan.appendChild(strongEl);
+            bannerSpan.appendChild(document.createTextNode(isAr
+                ? ' — لاختبار التدفق البرمجي فقط؛ الإجابات قوالب ثابتة وليست دليلاً على أداء النموذج الحقيقي.'
+                : ' — Workflow testing only; answers are deterministic offline templates and not evidence of real LLM grounding or answer quality.'
+            ));
+        }
+    }
+
+    /**
+     * Safely parse inline Markdown (bold, inline code) into a parent DOM element
+     * using pure DOM APIs without innerHTML or outerHTML.
+     */
+    function appendFormattedInline(parent, text) {
+        if (!text) return;
+        // Matches `code`, **bold**, or __bold__
+        const inlineRegex = /(`[^`\n]+`)|(\*\*[^*\n]+?\*\*)|(__[^_\n]+?__)/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = inlineRegex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                parent.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+
+            const matchedStr = match[0];
+            if (matchedStr.startsWith('`') && matchedStr.endsWith('`')) {
+                const code = document.createElement('code');
+                code.className = 'inline-code';
+                code.textContent = matchedStr.slice(1, -1);
+                parent.appendChild(code);
+            } else if (
+                (matchedStr.startsWith('**') && matchedStr.endsWith('**')) ||
+                (matchedStr.startsWith('__') && matchedStr.endsWith('__'))
+            ) {
+                const strong = document.createElement('strong');
+                const innerText = matchedStr.slice(2, -2);
+                if (innerText.startsWith('`') && innerText.endsWith('`')) {
+                    const code = document.createElement('code');
+                    code.className = 'inline-code';
+                    code.textContent = innerText.slice(1, -1);
+                    strong.appendChild(code);
+                } else {
+                    strong.textContent = innerText;
+                }
+                parent.appendChild(strong);
+            }
+
+            lastIndex = inlineRegex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            parent.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+    }
+
+    /**
+     * Safely format message content by parsing Markdown blocks (headings, lists, code blocks, paragraphs)
+     * and inline formatting using pure DOM APIs without innerHTML or outerHTML.
      */
     function appendSafeContentToBubble(bubbleElement, rawText, isArabic) {
         if (!rawText) return;
 
-        const paragraphs = rawText.split(/\n\n+/);
-        paragraphs.forEach(para => {
-            const p = document.createElement('p');
-            p.style.marginBottom = '8px';
+        const lines = rawText.split(/\r?\n/);
+        let currentList = null;
+        let currentParagraph = null;
+        let inCodeBlock = false;
+        let codeLines = [];
+        let codeLang = '';
 
-            const lines = para.split('\n');
-            lines.forEach((line, idx) => {
-                if (idx > 0) {
-                    p.appendChild(document.createElement('br'));
+        function flushParagraph() {
+            if (currentParagraph) {
+                bubbleElement.appendChild(currentParagraph);
+                currentParagraph = null;
+            }
+        }
+
+        function flushList() {
+            if (currentList) {
+                bubbleElement.appendChild(currentList.element);
+                currentList = null;
+            }
+        }
+
+        function flushAll() {
+            flushParagraph();
+            flushList();
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // Fenced code block toggle
+            if (line.trim().startsWith('```')) {
+                if (inCodeBlock) {
+                    const pre = document.createElement('pre');
+                    pre.className = 'code-block-wrapper';
+                    const code = document.createElement('code');
+                    if (codeLang) {
+                        code.className = `language-${codeLang}`;
+                    }
+                    code.textContent = codeLines.join('\n');
+                    pre.appendChild(code);
+                    bubbleElement.appendChild(pre);
+
+                    inCodeBlock = false;
+                    codeLines = [];
+                    codeLang = '';
+                } else {
+                    flushAll();
+                    inCodeBlock = true;
+                    codeLines = [];
+                    codeLang = line.trim().slice(3).trim();
                 }
-                const textNode = document.createTextNode(line);
-                p.appendChild(textNode);
-            });
+                continue;
+            }
 
-            bubbleElement.appendChild(p);
-        });
+            if (inCodeBlock) {
+                codeLines.push(line);
+                continue;
+            }
+
+            // Blank line separates blocks
+            if (!line.trim()) {
+                flushAll();
+                continue;
+            }
+
+            // Headings: # H1, ## H2, ### H3, #### H4
+            const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
+            if (headingMatch) {
+                flushAll();
+                const level = headingMatch[1].length;
+                const headingEl = document.createElement(`h${level}`);
+                headingEl.className = `md-heading md-h${level}`;
+                appendFormattedInline(headingEl, headingMatch[2].trim());
+                bubbleElement.appendChild(headingEl);
+                continue;
+            }
+
+            // Bullet list item: * or -
+            const bulletMatch = line.match(/^\s*[-*]\s+(.+)$/);
+            if (bulletMatch) {
+                flushParagraph();
+                if (!currentList || currentList.type !== 'ul') {
+                    flushList();
+                    currentList = {
+                        type: 'ul',
+                        element: document.createElement('ul')
+                    };
+                    currentList.element.className = 'md-list md-bullet-list';
+                }
+                const li = document.createElement('li');
+                appendFormattedInline(li, bulletMatch[1]);
+                currentList.element.appendChild(li);
+                continue;
+            }
+
+            // Numbered list item: 1. or 2.
+            const numberMatch = line.match(/^\s*\d+\.\s+(.+)$/);
+            if (numberMatch) {
+                flushParagraph();
+                if (!currentList || currentList.type !== 'ol') {
+                    flushList();
+                    currentList = {
+                        type: 'ol',
+                        element: document.createElement('ol')
+                    };
+                    currentList.element.className = 'md-list md-numbered-list';
+                }
+                const li = document.createElement('li');
+                appendFormattedInline(li, numberMatch[1]);
+                currentList.element.appendChild(li);
+                continue;
+            }
+
+            // Indented continuation of list item
+            if (currentList && /^\s{2,}\S/.test(line)) {
+                const lastLi = currentList.element.lastElementChild;
+                if (lastLi) {
+                    lastLi.appendChild(document.createElement('br'));
+                    appendFormattedInline(lastLi, line.trim());
+                    continue;
+                }
+            }
+
+            // Regular paragraph line
+            flushList();
+            if (!currentParagraph) {
+                currentParagraph = document.createElement('p');
+                currentParagraph.className = 'md-paragraph';
+            } else {
+                currentParagraph.appendChild(document.createElement('br'));
+            }
+            appendFormattedInline(currentParagraph, line);
+        }
+
+        // Handle unclosed code block gracefully
+        if (inCodeBlock && codeLines.length > 0) {
+            const pre = document.createElement('pre');
+            pre.className = 'code-block-wrapper';
+            const code = document.createElement('code');
+            if (codeLang) code.className = `language-${codeLang}`;
+            code.textContent = codeLines.join('\n');
+            pre.appendChild(code);
+            bubbleElement.appendChild(pre);
+        }
+
+        flushAll();
     }
 
     /**
@@ -187,21 +548,22 @@
      * Map grounding status enum to human-readable label.
      */
     function formatGroundingStatus(status) {
+        const isAr = (currentInterfaceLang === 'ar');
         switch (status) {
             case 'grounded':
-                return 'Grounded (Verified KB)';
+                return isAr ? 'موثق (أدلة معتمدة)' : 'Grounded (Verified KB)';
             case 'site_qualified':
-                return 'Site-Specific Qualified';
+                return isAr ? 'مشروط بفحص الهدف' : 'Site-Specific Qualified';
             case 'insufficient_evidence':
-                return 'Insufficient KB Evidence';
+                return isAr ? 'أدلة غير كافية' : 'Insufficient KB Evidence';
             case 'empty_retrieval':
-                return 'No Relevant Evidence Found';
+                return isAr ? 'لم يتم العثور على أدلة' : 'No Relevant Evidence Found';
             case 'attribution_failed':
-                return 'Attribution Check Suppressed';
+                return isAr ? 'محجوب لعدم تطابق الأدلة' : 'Attribution Check Suppressed';
             case 'incomplete_truncated':
-                return 'Incomplete / Token Truncated';
+                return isAr ? 'إجابة مجتزأة / تجاوز الحد' : 'Incomplete / Token Truncated';
             default:
-                return status || 'Completed';
+                return status || (isAr ? 'مكتمل' : 'Completed');
         }
     }
 
@@ -273,62 +635,11 @@
     /**
      * Update the Evidence panel for the active turn using real response payloads.
      */
+    /**
+     * Update the Evidence panel for the active turn (panel removed from UI).
+     */
     function updateEvidencePanel(response) {
-        // Update Attribution Status Badge
-        elements.turnStatusBadge.className = `badge ${getStatusBadgeClass(response.grounding_status)}`;
-        elements.turnStatusBadge.textContent = formatGroundingStatus(response.grounding_status);
-
-        // Update Latency & Language Metrics
-        elements.turnMetricsRow.classList.remove('hidden');
-        elements.turnLang.textContent = (response.language === 'ar') ? 'Arabic' : 'English';
-        elements.turnRetrievalTime.textContent = `${response.retrieval_latency_ms || 0} ms`;
-        elements.turnLlmTime.textContent = `${response.llm_latency_ms || 0} ms`;
-        elements.turnTotalTime.textContent = `${response.total_latency_ms || 0} ms`;
-
-        // Update Description text based on operational state
-        if (response.grounding_status === 'grounded') {
-            elements.turnStatusDesc.textContent = 'All citations verified against retrieved Master KB chunks. Guardrails passed.';
-        } else if (response.grounding_status === 'site_qualified') {
-            elements.turnStatusDesc.textContent = 'Site-specific target inquiry detected. Answer qualified with mandatory assessment disclaimer.';
-        } else if (response.grounding_status === 'empty_retrieval' || response.grounding_status === 'insufficient_evidence') {
-            elements.turnStatusDesc.textContent = 'Retrieval context was insufficient or below relevance threshold. Refusal returned safely.';
-        } else if (response.grounding_status === 'attribution_failed') {
-            elements.turnStatusDesc.textContent = 'Generated narrative cited unverified tags or unsupported identifiers. Answer suppressed for safety.';
-        } else if (response.grounding_status === 'incomplete_truncated') {
-            elements.turnStatusDesc.textContent = 'Generation reached provider token limit and was cut off. Partial answer was suppressed for safety.';
-        }
-
-        // Render Cited Sources
-        elements.citedSourcesList.textContent = '';
-        const citedSources = response.cited_sources || [];
-        elements.citedCountBadge.textContent = citedSources.length;
-
-        if (citedSources.length === 0) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = 'sources-empty';
-            emptyDiv.textContent = 'No sources explicitly cited in this answer.';
-            elements.citedSourcesList.appendChild(emptyDiv);
-        } else {
-            citedSources.forEach(src => {
-                elements.citedSourcesList.appendChild(renderSourceCard(src));
-            });
-        }
-
-        // Render Retrieved Candidates
-        elements.retrievedSourcesList.textContent = '';
-        const retrievedSources = response.retrieved_sources || [];
-        elements.retrievedCountBadge.textContent = retrievedSources.length;
-
-        if (retrievedSources.length === 0) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = 'sources-empty';
-            emptyDiv.textContent = 'No candidate chunks retrieved.';
-            elements.retrievedSourcesList.appendChild(emptyDiv);
-        } else {
-            retrievedSources.forEach(src => {
-                elements.retrievedSourcesList.appendChild(renderSourceCard(src));
-            });
-        }
+        // Evidence and diagnostics panel removed from UI; no-op
     }
 
     /**
@@ -336,8 +647,10 @@
      */
     function resetConversation() {
         activeConversationId = null;
-        elements.activeSessionId.textContent = 'Fresh Conversation';
-        elements.activeSessionId.title = 'No active conversation ID yet';
+        if (elements.activeSessionId) {
+            elements.activeSessionId.textContent = 'Fresh Conversation';
+            elements.activeSessionId.title = 'No active conversation ID yet';
+        }
 
         // Reset chat feed
         elements.chatMessages.textContent = '';
@@ -345,26 +658,6 @@
             elements.welcomeMessage.style.display = 'block';
             elements.chatMessages.appendChild(elements.welcomeMessage);
         }
-
-        // Reset evidence panel
-        elements.turnStatusBadge.className = 'badge badge-neutral';
-        elements.turnStatusBadge.textContent = 'No Active Query';
-        elements.turnMetricsRow.classList.add('hidden');
-        elements.turnStatusDesc.textContent = 'Submit a question to inspect retrieved Knowledge Base records, citations, and attribution verification.';
-        
-        elements.citedCountBadge.textContent = '0';
-        elements.citedSourcesList.textContent = '';
-        const emptyCited = document.createElement('div');
-        emptyCited.className = 'sources-empty';
-        emptyCited.textContent = 'No cited sources for this turn.';
-        elements.citedSourcesList.appendChild(emptyCited);
-
-        elements.retrievedCountBadge.textContent = '0';
-        elements.retrievedSourcesList.textContent = '';
-        const emptyRet = document.createElement('div');
-        emptyRet.className = 'sources-empty';
-        emptyRet.textContent = 'No retrieved candidates.';
-        elements.retrievedSourcesList.appendChild(emptyRet);
 
         // Hide any active error or status
         elements.chatStatusBar.classList.add('hidden');
@@ -375,65 +668,24 @@
     }
 
     /**
-     * Check backend health and update status badges / diagnostics.
+     * Check backend health and update provider banner if in mock mode.
      */
     async function checkHealthStatus() {
-        elements.systemHealthPill.className = 'health-pill health-unknown';
-        elements.systemHealthText.textContent = 'Checking...';
-
-        const result = await window.AssistantAPI.getHealth();
-
-        if (!result.ok && !result.data) {
-            // Complete network / connection failure
-            elements.systemHealthPill.className = 'health-pill health-offline';
-            elements.systemHealthText.textContent = 'Offline (127.0.0.1:8000)';
-            elements.llmModeBadge.className = 'mode-badge mode-unknown';
-            elements.llmModeText.textContent = 'Unknown Provider';
-            elements.mockWarningBanner.classList.add('hidden');
-
-            elements.diagStatus.textContent = 'Unreachable';
-            elements.diagStatus.style.color = 'var(--color-danger)';
-            return;
+        try {
+            const result = await window.AssistantAPI.getHealth();
+            if (result && result.data) {
+                configuredProvider = (result.data.llm_provider || 'unknown').toLowerCase();
+                if (elements.mockWarningBanner) {
+                    if (configuredProvider === 'mock') {
+                        elements.mockWarningBanner.classList.remove('hidden');
+                    } else {
+                        elements.mockWarningBanner.classList.add('hidden');
+                    }
+                }
+            }
+        } catch (err) {
+            // Gracefully ignore local network failures
         }
-
-        const data = result.data;
-        configuredProvider = (data.llm_provider || 'unknown').toLowerCase();
-
-        // 1. Update Health Indicator
-        if (data.status === 'healthy') {
-            elements.systemHealthPill.className = 'health-pill health-healthy';
-            elements.systemHealthText.textContent = 'Healthy (588 KB Chunks)';
-            elements.diagStatus.textContent = 'Healthy (200 OK)';
-            elements.diagStatus.style.color = 'var(--color-success)';
-        } else {
-            elements.systemHealthPill.className = 'health-pill health-degraded';
-            elements.systemHealthText.textContent = 'Degraded';
-            elements.diagStatus.textContent = 'Degraded (503 Service Warning)';
-            elements.diagStatus.style.color = 'var(--color-warning)';
-        }
-
-        // 2. Update Provider Indicator & Prominent Mock Warning
-        if (configuredProvider === 'mock') {
-            elements.llmModeBadge.className = 'mode-badge mode-mock';
-            elements.llmModeText.textContent = 'Provider: Mock Simulator';
-            elements.mockWarningBanner.classList.remove('hidden');
-        } else if (configuredProvider === 'groq') {
-            elements.llmModeBadge.className = 'mode-badge mode-groq';
-            elements.llmModeText.textContent = 'Provider: Groq';
-            elements.mockWarningBanner.classList.add('hidden');
-        } else {
-            elements.llmModeBadge.className = 'mode-badge mode-unknown';
-            elements.llmModeText.textContent = `Provider: ${configuredProvider}`;
-            elements.mockWarningBanner.classList.add('hidden');
-        }
-
-        // 3. Update Diagnostics Details (never disclosing secrets)
-        elements.diagVersion.textContent = data.version || '0.2.0';
-        elements.diagKbVerified.textContent = data.master_kb_checksum_verified ? 'Verified Baseline Match' : 'Checksum Mismatch';
-        elements.diagVectorStatus.textContent = data.vector_store_status || 'Unknown';
-        elements.diagPointsCount.textContent = `${data.indexed_point_count || 0} Points`;
-        elements.diagLlmProvider.textContent = data.llm_provider || 'None';
-        elements.diagLlmConfigured.textContent = data.llm_configured ? 'Configured (Active)' : 'Unconfigured';
     }
 
     /**
@@ -464,8 +716,10 @@
             // Update in-memory session identifier
             if (response.conversation_id) {
                 activeConversationId = response.conversation_id;
-                elements.activeSessionId.textContent = activeConversationId;
-                elements.activeSessionId.title = `Active in-memory session: ${activeConversationId}`;
+                if (elements.activeSessionId) {
+                    elements.activeSessionId.textContent = activeConversationId;
+                    elements.activeSessionId.title = `Active in-memory session: ${activeConversationId}`;
+                }
             }
 
             // Render assistant narrative
@@ -497,34 +751,36 @@
     }
 
     /**
-     * Tab switching logic for Evidence vs Diagnostics.
+     * Tab switching logic (Evidence and diagnostics panel removed from UI).
      */
     function setupTabs() {
-        elements.tabBtnEvidence.addEventListener('click', () => {
-            elements.tabBtnEvidence.classList.add('active');
-            elements.tabBtnEvidence.setAttribute('aria-selected', 'true');
-            elements.tabBtnDiagnostics.classList.remove('active');
-            elements.tabBtnDiagnostics.setAttribute('aria-selected', 'false');
-
-            elements.tabContentEvidence.classList.add('active');
-            elements.tabContentDiagnostics.classList.remove('active');
-        });
-
-        elements.tabBtnDiagnostics.addEventListener('click', () => {
-            elements.tabBtnDiagnostics.classList.add('active');
-            elements.tabBtnDiagnostics.setAttribute('aria-selected', 'true');
-            elements.tabBtnEvidence.classList.remove('active');
-            elements.tabBtnEvidence.setAttribute('aria-selected', 'false');
-
-            elements.tabContentDiagnostics.classList.add('active');
-            elements.tabContentEvidence.classList.remove('active');
-        });
+        // Evidence and diagnostics panel removed from UI; no-op
     }
 
     /**
      * Setup event listeners for forms, buttons, and keyboard controls.
      */
     function setupEventListeners() {
+        // Language Selection Buttons (explicit Arabic / English)
+        if (elements.langBtnAr) {
+            elements.langBtnAr.addEventListener('click', () => {
+                setInterfaceLanguage('ar');
+            });
+        }
+        if (elements.langBtnEn) {
+            elements.langBtnEn.addEventListener('click', () => {
+                setInterfaceLanguage('en');
+            });
+        }
+
+        // Language Toggle Button (switches interface language between en and ar)
+        if (elements.langToggleBtn) {
+            elements.langToggleBtn.addEventListener('click', () => {
+                const nextLang = (currentInterfaceLang === 'en') ? 'ar' : 'en';
+                setInterfaceLanguage(nextLang);
+            });
+        }
+
         // Chat Form Submit
         elements.chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -548,11 +804,6 @@
         // New Chat Button
         elements.newChatBtn.addEventListener('click', () => {
             resetConversation();
-        });
-
-        // Refresh Health Button
-        elements.refreshHealthBtn.addEventListener('click', () => {
-            checkHealthStatus();
         });
 
         // Quick Prompt Chips

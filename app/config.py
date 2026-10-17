@@ -1,7 +1,9 @@
 """Configuration settings for the AI Cybersecurity Assistant."""
 
+import json
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -48,7 +50,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
     GROQ_TEMPERATURE: float = 0.1
-    GROQ_MAX_TOKENS: int = 1024
+    GROQ_MAX_TOKENS: int = 2048
     GROQ_TIMEOUT_SECONDS: float = 20.0
     GROQ_MAX_RETRIES: int = 2
 
@@ -60,12 +62,28 @@ class Settings(BaseSettings):
     MAX_CONVERSATIONS: int = 1000
     MAX_TURNS_PER_CONVERSATION: int = 6
     MAX_MESSAGE_CHARS: int = 2000
-    CORS_ALLOW_ORIGINS: List[str] = [
+    CORS_ALLOW_ORIGINS: Union[List[str], str] = [
         "http://localhost:3000",
         "http://localhost:8000",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
     ]
+
+    @field_validator("CORS_ALLOW_ORIGINS", mode="after")
+    @classmethod
+    def parse_cors_allow_origins(cls, v: Union[List[str], str]) -> List[str]:
+        """Support both JSON array and comma-separated origin strings in .env."""
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("[") and v_str.endswith("]"):
+                try:
+                    parsed = json.loads(v_str)
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v_str.split(",") if origin.strip()]
+        return [str(origin).strip() for origin in v if str(origin).strip()]
 
     model_config = SettingsConfigDict(
         env_file=".env",
