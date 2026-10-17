@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.rate_limiter import rate_limiter
 from app.api.v1.chat import get_conversation_store, get_pipeline, set_pipeline
 from app.api.v1.health import get_health_vector_store, set_health_vector_store
 from app.config import Settings, settings
@@ -25,12 +26,14 @@ from app.rag.pipeline import RAGChatPipeline
 
 @pytest.fixture(autouse=True)
 def reset_dependencies():
-    """Reset global dependencies and conversation store before and after each test."""
+    """Reset global dependencies, conversation store, and rate limiter before and after each test."""
     conversation_store.clear()
+    rate_limiter.reset()
     set_pipeline(None)
     set_health_vector_store(None)
     yield
     conversation_store.clear()
+    rate_limiter.reset()
     set_pipeline(None)
     set_health_vector_store(None)
 
@@ -529,3 +532,62 @@ def test_chat_then_health_unmocked_reverse_order(client):
     assert health_data["indexed_point_count"] >= 588
 
 
+def test_root_browser_redirects_to_dashboard(client):
+    """Verify GET / with text/html Accept header redirects to /dashboard/."""
+    response = client.get("/", headers={"accept": "text/html,application/xhtml+xml"}, follow_redirects=False)
+    assert response.status_code == 307
+    assert response.headers["location"] == "/dashboard/"
+
+
+def test_chat_rate_limiting_enforcement(client, monkeypatch):
+    """Verify chat endpoint rejects requests with HTTP 429 when rate limit is exceeded."""
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", True)
+    monkeypatch.setattr(settings, "RATE_LIMIT_TESTING", True)
+    monkeypatch.setattr(settings, "RATE_LIMIT_REQUESTS_PER_MINUTE", 2)
+
+    # 1. First request succeeds
+    resp1 = client.post(
+        "/api/v1/chat",
+        json={"message": "What is SQL injection?"},
+        headers={"x-forwarded-for": "203.0.113.195"},
+    )
+    assert resp1.status_code == 200
+
+    # 2. Second request succeeds
+    resp2 = client.post(
+        "/api/v1/chat",
+        json={"message": "What is XSS?"},
+        headers={"x-forwarded-for": "203.0.113.195"},
+    )
+    assert resp2.status_code == 200
+
+    # 3. Third request within same minute is blocked
+    resp3 = client.post(
+        "/api/v1/chat",
+        json={"message": "What is CSRF?"},
+        headers={"x-forwarded-for": "203.0.113.195"},
+    )
+    assert resp3.status_code == 429
+    assert "Rate limit exceeded" in resp3.json()["detail"]
+    assert "Retry-After" in resp3.headers
+    assert resp3.headers["X-RateLimit-Remaining"] == "0"
+
+    # Different IP should succeed
+    resp_other_ip = client.post(
+        "/api/v1/chat",
+        json={"message": "What is SSRF?"},
+        headers={"x-forwarded-for": "198.51.100.42"},
+    )
+    assert resp_other_ip.status_code == 200
+
+
+def test_chat_payload_size_limit(client):
+    """Verify chat endpoint rejects requests exceeding MAX_REQUEST_BODY_BYTES with HTTP 413."""
+    oversized_length = str(settings.MAX_REQUEST_BODY_BYTES + 500)
+    resp = client.post(
+        "/api/v1/chat",
+        json={"message": "Testing payload size limit."},
+        headers={"content-length": oversized_length},
+    )
+    assert resp.status_code == 413
+    assert "exceeds maximum allowed size" in resp.json()["detail"]

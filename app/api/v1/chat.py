@@ -5,6 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.api.rate_limiter import check_chat_rate_limit
 from app.api.v1.health import get_health_vector_store
 from app.llm.base import LLMProviderError
 from app.memory.conversation_store import InMemoryConversationStore, conversation_store as default_store
@@ -61,6 +62,7 @@ def chat_endpoint(
     request: ChatRequest,
     pipeline: RAGChatPipeline = Depends(get_pipeline),
     store: InMemoryConversationStore = Depends(get_conversation_store),
+    _rate_limit: None = Depends(check_chat_rate_limit),
 ) -> ChatAPIResponse:
     """Process a user query through the RAG pipeline with session isolation and attribution checks."""
     user_message = request.message.strip()

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: ai-cybersecurity-assistant
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: "pip install --upgrade pip && pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt && python scripts/index_kb.py"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.2
+      - key: PYTHONPATH
+        value: .
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: QDRANT_STORAGE_PATH
+        value: ./data/qdrant_db
+      - key: CORS_ALLOW_ORIGINS
+        sync: false
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "15"

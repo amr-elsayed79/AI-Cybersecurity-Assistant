@@ -368,10 +368,11 @@ CORS_ALLOW_ORIGINS='["http://localhost:3000", "http://localhost:5173", "http://1
 
 Before exposing the API beyond `127.0.0.1`, the following operational boundaries must be respected:
 
-1. **Localhost Binding:** Must remain bound to `127.0.0.1`. Do not bind to `0.0.0.0` or expose port 8000 to public networks without a secure reverse proxy.
-2. **Authentication:** The API does not currently validate API keys or JWT tokens on incoming chat requests. Add an auth gateway prior to public deployment.
-3. **Rate Limiting:** No rate limiting is enforced in code. Rapid requests will exhaust the Groq API rate limit (HTTP 429). An API gateway or rate limiter (e.g., `slowapi`) is required for public endpoints.
-4. **Qdrant Embedded File Lock:** Qdrant runs in embedded mode (`data/qdrant_db`). It acquires an OS file lock (`.lock`). **Running Uvicorn with multiple worker processes will cause lock acquisition crashes.** To scale horizontally, run Qdrant as a standalone server over HTTP.
+1. **Network Binding & Reverse Proxy:** When deploying to production platforms (such as Render), bind Uvicorn to `0.0.0.0` and the assigned `$PORT`. The service runs behind the hosting platform's TLS reverse proxy.
+2. **Access Control & Authentication:** Conversation IDs rely on 128-bit random UUID4 unguessability. The public demo endpoints do not enforce user authentication. Do not treat CORS as an authentication boundary.
+3. **Built-in IP Rate Limiting:** A lightweight, thread-safe in-memory sliding-window rate limiter is enabled by default (`RATE_LIMIT_REQUESTS_PER_MINUTE=15` per client IP). Exceeding the threshold returns HTTP 429 Too Many Requests with a `Retry-After` header.
+4. **Request Size Protection:** Payloads are capped at `MAX_REQUEST_BODY_BYTES=100000` (100 KB), returning HTTP 413 if exceeded.
+5. **Qdrant Embedded File Lock:** Qdrant runs in embedded mode (`data/qdrant_db`). It acquires an OS file lock (`.lock`). **Running Uvicorn with multiple worker processes will cause lock acquisition crashes.** Always specify `--workers 1` in production.
 
 ---
 
@@ -380,3 +381,44 @@ Before exposing the API beyond `127.0.0.1`, the following operational boundaries
 1. **Active Scenarios Representation:** The 119 Active scanner scenarios are represented through 74 canonical vulnerability records. The Master KB does not contain a 1-to-1 scenario-to-chunk mapping table.
 2. **Deferred Scenarios:** The 74 Deferred scanner scenarios are explicitly omitted.
 3. **Synthetic / Mock Mode:** In `LLM_PROVIDER=mock` mode, responses validate software flow, schema serialization, and guardrails only; they do not assess factual reasoning.
+
+---
+
+## 16. Production & Cloud Deployment Guide (Render)
+
+This service is configured for direct deployment on Render as a Web Service.
+
+### Quick Reference:
+- **FastAPI ASGI Import Path:** `app.main:app`
+- **Render Build Command:**
+  ```bash
+  pip install --upgrade pip && pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt && python scripts/index_kb.py
+  ```
+- **Render Start Command:**
+  ```bash
+  uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+  ```
+- **Health Check Path:** `/health`
+- **Hardware Sizing:** **Starter Tier (1 GB RAM)** is strongly recommended. The PyTorch and Sentence-Transformers runtime footprint is ~841 MB, which exceeds Render's 512 MB Free tier limit.
+
+### Production Endpoints:
+- **Demo Dashboard:** `https://<service-name>.onrender.com/dashboard/` (Browser visits to `/` redirect here automatically).
+- **Interactive OpenAPI Documentation:** `https://<service-name>.onrender.com/docs`
+- **ReDoc API Reference:** `https://<service-name>.onrender.com/redoc`
+- **System Health Endpoint:** `https://<service-name>.onrender.com/health` (Alias: `/api/v1/health`)
+- **Chat API Endpoint:** `https://<service-name>.onrender.com/api/v1/chat` (Alias: `/api/chat`)
+
+### Scanner Website Integration:
+If calling the assistant from a separately hosted vulnerability scanner website (e.g. `https://my-scanner.com`):
+1. In the Render Dashboard environment settings, configure:
+   ```ini
+   CORS_ALLOW_ORIGINS="https://my-scanner.com"
+   ```
+2. The scanner website can make `POST` requests to `https://<service-name>.onrender.com/api/v1/chat` with:
+   ```json
+   {
+     "message": "What is SQL injection, and what are two defensive ways to prevent it?",
+     "conversation_id": "session-uuid4-or-slug"
+   }
+   ```
+3. Rate limits apply per IP address (15 requests/minute). Handle HTTP 429 gracefully using the `Retry-After` response header.

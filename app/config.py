@@ -69,6 +69,12 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8000",
     ]
 
+    # Public Demo Protection & Rate Limiting Settings
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 15
+    MAX_REQUEST_BODY_BYTES: int = 100_000
+    RATE_LIMIT_TESTING: bool = False
+
     @field_validator("CORS_ALLOW_ORIGINS", mode="after")
     @classmethod
     def parse_cors_allow_origins(cls, v: Union[List[str], str]) -> List[str]:

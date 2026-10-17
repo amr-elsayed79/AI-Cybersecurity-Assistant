@@ -15,7 +15,7 @@ from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.chat import chat_endpoint, router as chat_router
@@ -81,10 +81,11 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-        """Pass through HTTPExceptions with clean detail messages."""
+        """Pass through HTTPExceptions with clean detail messages and headers."""
         return JSONResponse(
             status_code=exc.status_code,
             content={"detail": exc.detail},
+            headers=exc.headers,
         )
 
     @app.exception_handler(Exception)
@@ -96,9 +97,12 @@ def create_app() -> FastAPI:
             content={"detail": "An internal server error occurred."},
         )
 
-    # Root informational endpoint
+    # Root informational endpoint (redirects browser HTML requests to demo dashboard)
     @app.get("/", tags=["Info"])
-    def root_info() -> Dict[str, Any]:
+    def root_info(request: Request) -> Any:
+        accept = request.headers.get("accept", "")
+        if "text/html" in accept and "application/json" not in accept:
+            return RedirectResponse(url="/dashboard/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
         return {
             "name": settings.PROJECT_NAME,
             "version": settings.VERSION,
